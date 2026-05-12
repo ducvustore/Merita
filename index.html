@@ -827,6 +827,61 @@
       flex-shrink: 0;
     }
   </style>
+
+
+  <style id="mobile-flip-fix-overrides">
+    /* Sửa lỗi lật thẻ bị soi ngược/mirror trên mobile browser như Zalo/iPhone */
+    @media (max-width: 760px) {
+      .flip-card-wrap {
+        perspective: none !important;
+      }
+      .flip-card {
+        min-height: auto !important;
+        height: auto !important;
+        transform: none !important;
+        transform-style: flat !important;
+      }
+      .flip-card.is-flipped {
+        transform: none !important;
+      }
+      .flip-face {
+        position: relative !important;
+        inset: auto !important;
+        transform: none !important;
+        -webkit-transform: none !important;
+        backface-visibility: visible !important;
+        -webkit-backface-visibility: visible !important;
+        overflow: visible !important;
+      }
+      .flip-card:not(.is-flipped) .flip-front {
+        display: flex !important;
+      }
+      .flip-card:not(.is-flipped) .flip-back {
+        display: none !important;
+      }
+      .flip-card.is-flipped .flip-front {
+        display: none !important;
+      }
+      .flip-card.is-flipped .flip-back {
+        display: flex !important;
+        max-height: none !important;
+        overflow: visible !important;
+      }
+      .quick-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .back-head {
+        gap: 10px !important;
+      }
+      .back-actions {
+        margin-top: 14px !important;
+      }
+      .photo-tag, .house-label {
+        transform: none !important;
+        -webkit-transform: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="page">
