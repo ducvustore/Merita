@@ -532,6 +532,14 @@
       padding:12px 13px; border-radius:18px;
       background:rgba(255,255,255,.66); border:1px solid rgba(183,214,207,.7);
       box-shadow:0 10px 24px rgba(8,47,45,.055);
+      cursor:pointer;
+      transition:transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+    .map-legend-row div:hover, .map-legend-row div.active {
+      transform:translateY(-1px);
+      background:linear-gradient(135deg, #edfdf8, #fff8e7);
+      border-color:#b8ddd7;
+      box-shadow:0 12px 22px rgba(15,118,110,.12);
     }
     .map-legend-row b { display:block; color:var(--deep); font-size:14px; }
     .map-legend-row span { display:block; color:#6b7f82; font-size:12px; margin-top:3px; }
@@ -631,6 +639,26 @@
       box-shadow:0 8px 18px rgba(8,47,45,.06) !important;
     }
 
+
+    /* Unit photo files are loaded from /units by unit code, e.g. units/A1-418.jpg */
+    .unit-photo-img {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      border-radius:inherit;
+      z-index:1;
+      opacity:0;
+      transition:opacity .18s ease;
+    }
+    .unit-photo-img:not(.is-missing) { opacity:1; }
+    .front-image.has-unit-photo { padding:0; overflow:hidden; }
+    .front-image.has-unit-photo .house-illustration {
+      opacity:0;
+      pointer-events:none;
+    }
   </style>
 
   <style id="sharp-map-overrides">
@@ -714,13 +742,13 @@
         linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.18));
     }
     .hero-photo-1 {
-      background-image: url("images/banner-1.png");
+      background-image: url('images/banner-1.png');
     }
     .hero-photo-2 {
-      background-image: url("images/banner-2.png");
+      background-image: url('images/banner-2.png');
     }
     .hero-photo-3 {
-      background-image: url("images/banner-3.png");
+      background-image: url('images/banner-3.png');
     }
     .hero-slide-copy {
       position: relative;
@@ -827,61 +855,6 @@
       flex-shrink: 0;
     }
   </style>
-
-
-  <style id="mobile-flip-fix-overrides">
-    /* Sửa lỗi lật thẻ bị soi ngược/mirror trên mobile browser như Zalo/iPhone */
-    @media (max-width: 760px) {
-      .flip-card-wrap {
-        perspective: none !important;
-      }
-      .flip-card {
-        min-height: auto !important;
-        height: auto !important;
-        transform: none !important;
-        transform-style: flat !important;
-      }
-      .flip-card.is-flipped {
-        transform: none !important;
-      }
-      .flip-face {
-        position: relative !important;
-        inset: auto !important;
-        transform: none !important;
-        -webkit-transform: none !important;
-        backface-visibility: visible !important;
-        -webkit-backface-visibility: visible !important;
-        overflow: visible !important;
-      }
-      .flip-card:not(.is-flipped) .flip-front {
-        display: flex !important;
-      }
-      .flip-card:not(.is-flipped) .flip-back {
-        display: none !important;
-      }
-      .flip-card.is-flipped .flip-front {
-        display: none !important;
-      }
-      .flip-card.is-flipped .flip-back {
-        display: flex !important;
-        max-height: none !important;
-        overflow: visible !important;
-      }
-      .quick-grid {
-        grid-template-columns: 1fr !important;
-      }
-      .back-head {
-        gap: 10px !important;
-      }
-      .back-actions {
-        margin-top: 14px !important;
-      }
-      .photo-tag, .house-label {
-        transform: none !important;
-        -webkit-transform: none !important;
-      }
-    }
-  </style>
 </head>
 <body>
   <div class="page">
@@ -964,10 +937,10 @@
           </div>
 
           <div class="map-legend-row">
-            <div><b>Khu A</b></div>
-            <div><b>Khu B</b></div>
-            <div><b>Khu C</b></div>
-            <div><b>Khu D</b></div>
+            <div class="zone-card active" data-zone="A" role="button" tabindex="0"><b>Khu A</b></div>
+            <div class="zone-card" data-zone="B" role="button" tabindex="0"><b>Khu B</b></div>
+            <div class="zone-card" data-zone="C" role="button" tabindex="0"><b>Khu C</b></div>
+            <div class="zone-card" data-zone="D" role="button" tabindex="0"><b>Khu D</b></div>
           </div>
 
           <div class="section-toolbar premium unit-directory-toolbar"><span></span><span>Bấm căn để mở hồ sơ bên phải</span></div>
@@ -988,7 +961,7 @@
             <div class="info-grid">
               <div class="field">
                 <label>Tình trạng</label>
-                <div class="value-box" id="publicStatusValue">Đang ở</div>
+                <div class="value-box" id="publicStatusValue">Đã hoàn thiện nội thất – Chưa ở</div>
               </div>
               <div class="field">
                 <label>Căn</label>
@@ -996,7 +969,7 @@
               </div>
               <div class="field full">
                 <label>Ghi chú</label>
-                <div class="value-box" id="publicNoteValue">Nhà ở hộ gia đình.</div>
+                <div class="value-box" id="publicNoteValue">Không</div>
               </div>
             </div>
           </div>
@@ -1010,8 +983,9 @@
             <div class="flip-card-wrap">
               <div class="flip-card" id="detailFlipCard" title="Bấm để xem hình căn / thông tin chi tiết">
                 <div class="flip-face flip-front">
-                  <div class="front-image">
-                    <div class="house-illustration">
+                  <div class="front-image" id="unitPhotoFrame">
+                    <img class="unit-photo-img is-missing" id="unitPhotoImg" src="" alt="Hình ảnh căn A1-418">
+                    <div class="house-illustration" id="unitPhotoPlaceholder">
                       <div class="house-label" id="photoUnitLabel">Căn A1-418</div>
                     </div>
                   </div>
@@ -1149,16 +1123,21 @@
   <script>
     const zoneData = {
       A:['A1-418','A2-420','A3-422','A4-424','A5-426','A6-428','A7-430','A8-432','A9-434','A10-436','A11-438','A12-440','A13-442','A14-444','A15-446','A16-448','A17-450','A18-452','A19-454','A20-456','A41-39','A40-41','A39-43','A38-45','A37-47','A36-49','A35-51','A34-53','A33-55','A32-57','A31-59','A30-61','A29-63','A28-65','A27-67','A26-69','A25-71','A24-73','A23-75','A22-77','A21-79'],
-      B:['B22-458','B21-460','B20-462','B19-464','B18-466','B17-468','B16-470','B15-472','B14-474','B13-476','B12-478','B11-480','B10-482','B9-484','B8-486','B7-488','B6-490','B5-492','B4-494','B3-496','B2-498','B1-500','B23-81','B24-83','B25-85','B26-87','B27-89','B28-91','B29-93','B30-95','B31-97','B32-99','B33-101','B34-103','B35-106','B36-107','B37-109','B38-111','B39-113','B40-115'],
-      C:['C1-22','C2-20','C3-18','C4-16','C5-14','C6-12','C7-10','C8-8','C9-6','C10-2','C18-17','C17-15','C16-11','C15-9','C14-7','C13-5','C12-3','C11-1'],
+      B:['B22-458','B21-460','B20-462','B19-464','B18-466','B17-468','B16-470','B15-472','B14-474','B13-476','B12-478','B11-480','B10-482','B9-484','B8-486','B7-488','B6-490','B5-492','B4-494','B3-496','B2-498','B1-500','B23-81','B24-83','B25-85','B26-87','B27-89','B28-91','B29-93','B30-95','B31-97','B32-99','B33-101','B34-103','B35-105','B36-107','B37-109','B38-111','B39-113','B40-115'],
+      C:['C1-22','C2-20','C3-18','C4-16','C5-14','C6-12','C7-10','C8-8','C9-6','C10-2','C18-17','C17-15','C16-1','C15-9','C14-7','C13-5','C12-3','C11-1'],
       D:['D32-1','D31-3','D30-5','D29-2','D28-6','D27-8','D26-10','D25-12','D24-14','D23-16','D22-18','D21-20','D20-22','D19-24','D18-26','D17-28','D16-30','D15-32','D14-34','D13-36','D12-38','D11-40','D10-42','D9-44','D8-46','D7-48','D6-50','D5-52','D4-54','D3-56','D2-58','D1-60']
     };
 
     const sampleUnitData = {
-      'A1-418': { publicStatus:'Đang ở', publicNote:'Nhà ở hộ gia đình.', ownerName:'Nguyễn Văn A', tenantName:'', phone:'0909 000 001', email:'a1@example.com', internalNote:'Căn vận hành ổn định, chưa ghi nhận phát sinh lớn.' },
-      'B1-500': { publicStatus:'Kinh doanh', publicNote:'Đang sử dụng làm công ty/văn phòng.', ownerName:'Trần Thị B', tenantName:'Công ty ABC', phone:'0909 000 500', email:'vanphong@abc.vn', internalNote:'Đã đăng ký mô hình sử dụng làm văn phòng. Cần theo dõi giờ giao nhận hàng.' },
-      'C18-17': { publicStatus:'Trống', publicNote:'Chưa có người ở.', ownerName:'Lê Văn C', tenantName:'', phone:'0909 000 018', email:'c18@example.com', internalNote:'Đang chờ cập nhật hiện trạng mới sau khi hoàn thiện vệ sinh.' },
-      'D1-60': { publicStatus:'Đang cho thuê', publicNote:'Đang có bên thuê sử dụng.', ownerName:'Phạm Thị D', tenantName:'Nguyễn Minh K', phone:'0909 000 060', email:'d1@example.com', internalNote:'Khách thuê đang sử dụng ổn định. Cần kiểm tra hồ sơ tạm trú bổ sung.' }
+      'A1-418': { publicStatus:'Đã hoàn thiện nội thất – Chưa ở', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' },
+      'B5-492': { publicStatus:'Đang hoàn thiện nội thất', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' },
+      'B8-486': { publicStatus:'Đã hoàn thiện nội thất – Chưa ở', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' },
+      'B9-484': { publicStatus:'Đã hoàn thiện nội thất – Chưa ở', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' },
+      'B18-466': { publicStatus:'Đã hoàn thiện nội thất – Chưa ở', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' },
+      'B35-105': { publicStatus:'Nhà thô', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' },
+      'C16-1': { publicStatus:'Nhà thô', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' },
+      'D4-54': { publicStatus:'Nhà thô', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' },
+      'D22-18': { publicStatus:'Nhà thô', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' }
     };
 
     let currentZone = 'A';
@@ -1169,6 +1148,7 @@
 
     const unitList = document.getElementById('unitList');
     const zoneButtons = document.querySelectorAll('.zone');
+    const zoneCards = document.querySelectorAll('.zone-card');
     const sideTitle = document.getElementById('sideTitle');
     const sideSub = document.getElementById('sideSub');
     const modeBadge = document.getElementById('modeBadge');
@@ -1205,6 +1185,69 @@
     const flipPublicNoteValue = document.getElementById('flipPublicNoteValue');
     const editInfoBtn = document.getElementById('editInfoBtn');
     const editCardNote = document.getElementById('editCardNote');
+    const unitPhotoFrame = document.getElementById('unitPhotoFrame');
+    const unitPhotoImg = document.getElementById('unitPhotoImg');
+    const unitPhotoPlaceholder = document.getElementById('unitPhotoPlaceholder');
+
+    function getUnitImageCandidates(unitCode) {
+      // Ảnh căn để trong folder units, đặt tên theo đúng mã căn.
+      // Web sẽ thử lần lượt các đuôi phổ biến để tránh lỗi .jpg/.jpeg/.png hoặc chữ hoa/thường.
+      return [
+        `units/${unitCode}.jpg`,
+        `units/${unitCode}.jpeg`,
+        `units/${unitCode}.png`,
+        `units/${unitCode}.JPG`,
+        `units/${unitCode}.JPEG`,
+        `units/${unitCode}.PNG`
+      ];
+    }
+
+    function getUnitImagePath(unitCode) {
+      return getUnitImageCandidates(unitCode)[0];
+    }
+
+    let unitPhotoTryIndex = 0;
+    let unitPhotoCandidates = [];
+
+    function showUnitPlaceholder() {
+      unitPhotoFrame.classList.remove('has-unit-photo');
+      unitPhotoImg.classList.add('is-missing');
+      unitPhotoImg.removeAttribute('src');
+    }
+
+    function loadNextUnitPhotoCandidate() {
+      if (unitPhotoTryIndex >= unitPhotoCandidates.length) {
+        showUnitPlaceholder();
+        return;
+      }
+
+      const nextPath = unitPhotoCandidates[unitPhotoTryIndex];
+      unitPhotoImg.classList.add('is-missing');
+      unitPhotoFrame.classList.remove('has-unit-photo');
+
+      // Dùng Image() để kiểm tra trước, giúp ổn định hơn khi mở trực tiếp file local hoặc chạy GitHub Pages.
+      const tester = new Image();
+      tester.onload = () => {
+        unitPhotoImg.src = nextPath;
+        unitPhotoImg.classList.remove('is-missing');
+        unitPhotoFrame.classList.add('has-unit-photo');
+      };
+      tester.onerror = () => {
+        unitPhotoTryIndex += 1;
+        loadNextUnitPhotoCandidate();
+      };
+      tester.src = nextPath;
+    }
+
+    function loadUnitPhoto(unitCode, customImagePath) {
+      unitPhotoImg.alt = `Hình ảnh căn ${unitCode}`;
+      unitPhotoTryIndex = 0;
+      const defaultCandidates = getUnitImageCandidates(unitCode);
+      unitPhotoCandidates = customImagePath
+        ? [customImagePath, ...defaultCandidates.filter(path => path !== customImagePath)]
+        : defaultCandidates;
+      loadNextUnitPhotoCandidate();
+    }
 
     function getRows(zone) {
       return [{ label:`Khu ${zone} · Tất cả căn`, units: zoneData[zone] || [] }];
@@ -1213,12 +1256,13 @@
     function getWorkingUnitData(unitCode) {
       return workingData[unitCode] || {
         publicStatus:'Đang ở',
-        publicNote:'Nhà ở.',
+        publicNote:'Không',
         ownerName:'',
         tenantName:'',
         phone:'',
         email:'',
-        internalNote:''
+        internalNote:'',
+        image: getUnitImagePath(unitCode)
       };
     }
 
@@ -1226,6 +1270,7 @@
       currentZone = zone;
       unitList.innerHTML = '';
       zoneButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.zone === zone));
+      zoneCards.forEach(card => card.classList.toggle('active', card.dataset.zone === zone));
 
       getRows(zone).forEach(row => {
         const card = document.createElement('div');
@@ -1270,6 +1315,8 @@
       publicNoteValue.textContent = data.publicNote;
 
       photoUnitLabel.textContent = `Căn ${currentUnit}`;
+      const unitImagePath = data.image || getUnitImagePath(currentUnit);
+      loadUnitPhoto(currentUnit, unitImagePath);
       photoCardTitle.textContent = `Hình ảnh căn ${currentUnit}`;
       photoCardSub.textContent = isAdmin
         ? 'Anh đã đăng nhập quản trị. Bấm vào thẻ này để xoay qua phần thông tin xem nhanh của căn.'
@@ -1304,7 +1351,7 @@
       phoneInput.value = data.phone || '';
       emailInput.value = data.email || '';
       statusInput.value = data.publicStatus || 'Chưa cập nhật';
-      publicNoteInput.value = data.publicNote || '';
+      publicNoteInput.value = data.publicNote || 'Không';
     }
 
     loginBtn.addEventListener('click', () => {
@@ -1364,12 +1411,13 @@
     saveBtn.addEventListener('click', () => {
       workingData[currentUnit] = {
         publicStatus: statusInput.value,
-        publicNote: publicNoteInput.value.trim() || 'Chưa có ghi chú public.',
+        publicNote: publicNoteInput.value.trim() || 'Không',
         ownerName: ownerInput.value.trim(),
         tenantName: tenantInput.value.trim(),
         phone: phoneInput.value.trim(),
         email: emailInput.value.trim(),
-        internalNote: data.internalNote || ''
+        internalNote: (getWorkingUnitData(currentUnit).internalNote || ''),
+        image: (getWorkingUnitData(currentUnit).image || getUnitImagePath(currentUnit))
       };
       saveStatus.textContent = 'Đã lưu vào dữ liệu demo trên giao diện. Bước sau sẽ nối lưu thật xuống Supabase.';
       renderSidebar();
@@ -1407,13 +1455,21 @@
       detailFlipCard.classList.toggle('is-flipped');
     });
 
-    zoneButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        currentZone = btn.dataset.zone;
-        currentUnit = zoneData[currentZone][0];
-        isEditing = false;
-        renderZone(currentZone);
-        renderSidebar();
+    function selectZone(zone) {
+      currentZone = zone;
+      currentUnit = zoneData[currentZone][0];
+      isEditing = false;
+      renderZone(currentZone);
+      renderSidebar();
+    }
+
+    [...zoneButtons, ...zoneCards].forEach(control => {
+      control.addEventListener('click', () => selectZone(control.dataset.zone));
+      control.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectZone(control.dataset.zone);
+        }
       });
     });
 
