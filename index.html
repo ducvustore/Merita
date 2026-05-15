@@ -855,6 +855,146 @@
       flex-shrink: 0;
     }
   </style>
+
+  <style id="mobile-flip-final-fix">
+    /*
+      FINAL MOBILE FIX:
+      iPhone/Zalo/Safari render 3D flip/backface inconsistently.
+      On mobile/touch screens we completely disable 3D and switch faces by display.
+    */
+    @media (max-width: 900px), (hover: none), (pointer: coarse) {
+      .flip-card-wrap { perspective: none !important; }
+      .flip-card {
+        display: block !important;
+        position: relative !important;
+        height: auto !important;
+        min-height: 0 !important;
+        transform: none !important;
+        -webkit-transform: none !important;
+        transform-style: flat !important;
+        transition: none !important;
+        overflow: visible !important;
+      }
+      .flip-card.is-flipped {
+        transform: none !important;
+        -webkit-transform: none !important;
+      }
+      .flip-face {
+        position: relative !important;
+        inset: auto !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        transform: none !important;
+        -webkit-transform: none !important;
+        backface-visibility: visible !important;
+        -webkit-backface-visibility: visible !important;
+        overflow: hidden !important;
+      }
+      .flip-front,
+      .flip-back {
+        transform: none !important;
+        -webkit-transform: none !important;
+      }
+      .flip-card:not(.is-flipped) .flip-front {
+        display: flex !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+      }
+      .flip-card:not(.is-flipped) .flip-back {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      .flip-card.is-flipped .flip-front {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      .flip-card.is-flipped .flip-front *,
+      .flip-card.is-flipped .unit-photo-img,
+      .flip-card.is-flipped .house-illustration,
+      .flip-card.is-flipped .house-label {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+      }
+      .flip-card.is-flipped .flip-back {
+        display: flex !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        max-height: 560px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+
+    body.mobile-safe-flip .flip-card-wrap { perspective: none !important; }
+    body.mobile-safe-flip .flip-card {
+      display: block !important;
+      position: relative !important;
+      height: auto !important;
+      min-height: 0 !important;
+      transform: none !important;
+      -webkit-transform: none !important;
+      transform-style: flat !important;
+      transition: none !important;
+      overflow: visible !important;
+    }
+    body.mobile-safe-flip .flip-card.is-flipped {
+      transform: none !important;
+      -webkit-transform: none !important;
+    }
+    body.mobile-safe-flip .flip-face {
+      position: relative !important;
+      inset: auto !important;
+      width: 100% !important;
+      min-height: 0 !important;
+      transform: none !important;
+      -webkit-transform: none !important;
+      backface-visibility: visible !important;
+      -webkit-backface-visibility: visible !important;
+      overflow: hidden !important;
+    }
+    body.mobile-safe-flip .flip-front,
+    body.mobile-safe-flip .flip-back {
+      transform: none !important;
+      -webkit-transform: none !important;
+    }
+    body.mobile-safe-flip .flip-card:not(.is-flipped) .flip-front {
+      display: flex !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
+    body.mobile-safe-flip .flip-card:not(.is-flipped) .flip-back {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    body.mobile-safe-flip .flip-card.is-flipped .flip-front {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    body.mobile-safe-flip .flip-card.is-flipped .flip-front *,
+    body.mobile-safe-flip .flip-card.is-flipped .unit-photo-img,
+    body.mobile-safe-flip .flip-card.is-flipped .house-illustration,
+    body.mobile-safe-flip .flip-card.is-flipped .house-label {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+    body.mobile-safe-flip .flip-card.is-flipped .flip-back {
+      display: flex !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      max-height: 560px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
+
 </head>
 <body>
   <div class="page">
@@ -1121,6 +1261,16 @@
   </div>
 
   <script>
+
+    function syncMobileSafeFlipMode() {
+      const isTouchDevice = (navigator.maxTouchPoints || 0) > 0;
+      const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+      const isMobileUA = /Android|iPhone|iPad|iPod|Mobile|Zalo/i.test(navigator.userAgent || '');
+      document.body.classList.toggle('mobile-safe-flip', Boolean(isTouchDevice || isSmallScreen || isMobileUA));
+    }
+    syncMobileSafeFlipMode();
+    window.addEventListener('resize', syncMobileSafeFlipMode);
+
     const zoneData = {
       A:['A1-418','A2-420','A3-422','A4-424','A5-426','A6-428','A7-430','A8-432','A9-434','A10-436','A11-438','A12-440','A13-442','A14-444','A15-446','A16-448','A17-450','A18-452','A19-454','A20-456','A41-39','A40-41','A39-43','A38-45','A37-47','A36-49','A35-51','A34-53','A33-55','A32-57','A31-59','A30-61','A29-63','A28-65','A27-67','A26-69','A25-71','A24-73','A23-75','A22-77','A21-79'],
       B:['B22-458','B21-460','B20-462','B19-464','B18-466','B17-468','B16-470','B15-472','B14-474','B13-476','B12-478','B11-480','B10-482','B9-484','B8-486','B7-488','B6-490','B5-492','B4-494','B3-496','B2-498','B1-500','B23-81','B24-83','B25-85','B26-87','B27-89','B28-91','B29-93','B30-95','B31-97','B32-99','B33-101','B34-103','B35-105','B36-107','B37-109','B38-111','B39-113','B40-115'],
