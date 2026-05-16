@@ -933,6 +933,43 @@
       font-size: 14px;
     }
     .auth-dialog .field { margin-bottom: 12px; }
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .password-wrap .input {
+      padding-right: 52px;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(15,118,110,.10);
+      color: var(--deep);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: background .16s ease, transform .16s ease;
+    }
+    .password-toggle:hover {
+      background: rgba(15,118,110,.17);
+      transform: translateY(-50%) scale(1.03);
+    }
+    .password-toggle svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+      stroke: currentColor;
+    }
+    .password-toggle .eye-off-icon { display: none; }
+    .password-toggle.is-visible .eye-icon { display: none; }
+    .password-toggle.is-visible .eye-off-icon { display: block; }
     .auth-dialog-actions {
       display: flex;
       gap: 10px;
@@ -1262,7 +1299,21 @@
         </div>
         <div class="field">
           <label for="modalAdminPassword">Mật khẩu</label>
-          <input class="input" id="modalAdminPassword" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required>
+          <div class="password-wrap">
+            <input class="input" id="modalAdminPassword" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required>
+            <button class="password-toggle" id="toggleAdminPassword" type="button" aria-label="Hiện mật khẩu" aria-pressed="false">
+              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 3l18 18"></path>
+                <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"></path>
+                <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a17.5 17.5 0 0 1-3.1 4.1"></path>
+                <path d="M6.1 6.1C3.5 7.8 2 12 2 12s3.5 7 10 7a10.6 10.6 0 0 0 4-.8"></path>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="auth-error" id="adminLoginError"></div>
         <div class="auth-dialog-actions">
@@ -1285,11 +1336,20 @@
     const adminLoginForm = document.getElementById('adminLoginForm');
     const modalAdminEmail = document.getElementById('modalAdminEmail');
     const modalAdminPassword = document.getElementById('modalAdminPassword');
+    const toggleAdminPassword = document.getElementById('toggleAdminPassword');
     const adminLoginCancel = document.getElementById('adminLoginCancel');
     const adminLoginSubmit = document.getElementById('adminLoginSubmit');
     const adminLoginError = document.getElementById('adminLoginError');
     const appToast = document.getElementById('appToast');
     let toastTimer = null;
+
+    function setPasswordVisibility(isVisible) {
+      if (!modalAdminPassword || !toggleAdminPassword) return;
+      modalAdminPassword.type = isVisible ? 'text' : 'password';
+      toggleAdminPassword.classList.toggle('is-visible', isVisible);
+      toggleAdminPassword.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+      toggleAdminPassword.setAttribute('aria-label', isVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+    }
 
     function showToast(message) {
       if (!appToast) return;
@@ -1313,6 +1373,7 @@
 
     function openAdminLoginModal() {
       clearLoginError();
+      setPasswordVisibility(false);
       adminLoginModal.classList.add('is-open');
       adminLoginModal.setAttribute('aria-hidden', 'false');
       setTimeout(() => modalAdminEmail.focus(), 30);
@@ -1679,6 +1740,12 @@
     if (logoutBtn) logoutBtn.addEventListener('click', signOutAdmin);
     topAdminBtn.addEventListener('click', () => isAdmin ? signOutAdmin() : openAdminLoginModal());
 
+    if (toggleAdminPassword) {
+      toggleAdminPassword.addEventListener('click', () => {
+        setPasswordVisibility(modalAdminPassword.type === 'password');
+        modalAdminPassword.focus();
+      });
+    }
     adminLoginCancel.addEventListener('click', closeAdminLoginModal);
     adminLoginModal.addEventListener('click', (event) => {
       if (event.target === adminLoginModal) closeAdminLoginModal();
