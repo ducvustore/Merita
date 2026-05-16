@@ -897,6 +897,94 @@
     }
   </style>
 
+
+  <style id="custom-auth-modal-overrides">
+    .auth-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(8, 47, 45, .46);
+      backdrop-filter: blur(8px);
+    }
+    .auth-modal.is-open { display: flex; }
+    .auth-dialog {
+      width: min(440px, 100%);
+      border-radius: 28px;
+      border: 1px solid rgba(183,214,207,.86);
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(246,251,250,.96));
+      box-shadow: 0 32px 90px rgba(8,47,45,.28);
+      padding: 24px;
+      color: var(--text);
+    }
+    .auth-dialog h3 {
+      margin: 0 0 8px;
+      color: var(--deep);
+      font-size: 24px;
+      letter-spacing: -.03em;
+    }
+    .auth-dialog p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .auth-dialog .field { margin-bottom: 12px; }
+    .auth-dialog-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .auth-error {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: #fff1f2;
+      color: #be123c;
+      border: 1px solid #fecdd3;
+      font-weight: 750;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .auth-error.is-visible { display: block; }
+    .app-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(16px);
+      z-index: 10000;
+      max-width: min(520px, calc(100% - 32px));
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: rgba(8,47,45,.96);
+      color: #fff;
+      box-shadow: 0 18px 50px rgba(8,47,45,.24);
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+      font-weight: 800;
+      font-size: 14px;
+      text-align: center;
+    }
+    .app-toast.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 640px) {
+      .auth-modal { align-items: flex-end; padding: 12px; }
+      .auth-dialog { border-radius: 26px; padding: 20px; }
+      .auth-dialog-actions .btn { flex: 1; }
+      .app-toast { border-radius: 20px; bottom: 14px; }
+    }
+  </style>
+
 </head>
 <body>
   <div class="page">
@@ -1162,11 +1250,79 @@
     </div>
   </div>
 
+
+  <div class="auth-modal" id="adminLoginModal" aria-hidden="true">
+    <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle">
+      <h3 id="adminLoginTitle">Đăng nhập Quản trị</h3>
+      <p>Nhập tài khoản quản trị để mở phần thông tin chi tiết và chỉnh sửa dữ liệu căn.</p>
+      <form id="adminLoginForm">
+        <div class="field">
+          <label for="modalAdminEmail">Email quản trị</label>
+          <input class="input" id="modalAdminEmail" type="email" autocomplete="username" placeholder="Nhập email quản trị" required>
+        </div>
+        <div class="field">
+          <label for="modalAdminPassword">Mật khẩu</label>
+          <input class="input" id="modalAdminPassword" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required>
+        </div>
+        <div class="auth-error" id="adminLoginError"></div>
+        <div class="auth-dialog-actions">
+          <button class="btn secondary" id="adminLoginCancel" type="button">Hủy</button>
+          <button class="btn" id="adminLoginSubmit" type="submit">Đăng nhập</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="app-toast" id="appToast" aria-live="polite"></div>
+
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://yclftcrndluqrimazkts.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1mfqo9IGXAXe37Bn4RgvcA_rIeOws6_";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+    const adminLoginModal = document.getElementById('adminLoginModal');
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    const modalAdminEmail = document.getElementById('modalAdminEmail');
+    const modalAdminPassword = document.getElementById('modalAdminPassword');
+    const adminLoginCancel = document.getElementById('adminLoginCancel');
+    const adminLoginSubmit = document.getElementById('adminLoginSubmit');
+    const adminLoginError = document.getElementById('adminLoginError');
+    const appToast = document.getElementById('appToast');
+    let toastTimer = null;
+
+    function showToast(message) {
+      if (!appToast) return;
+      appToast.textContent = message;
+      appToast.classList.add('is-visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => appToast.classList.remove('is-visible'), 2600);
+    }
+
+    function showLoginError(message) {
+      if (!adminLoginError) return;
+      adminLoginError.textContent = message;
+      adminLoginError.classList.add('is-visible');
+    }
+
+    function clearLoginError() {
+      if (!adminLoginError) return;
+      adminLoginError.textContent = '';
+      adminLoginError.classList.remove('is-visible');
+    }
+
+    function openAdminLoginModal() {
+      clearLoginError();
+      adminLoginModal.classList.add('is-open');
+      adminLoginModal.setAttribute('aria-hidden', 'false');
+      setTimeout(() => modalAdminEmail.focus(), 30);
+    }
+
+    function closeAdminLoginModal() {
+      adminLoginModal.classList.remove('is-open');
+      adminLoginModal.setAttribute('aria-hidden', 'true');
+      clearLoginError();
+    }
 
 
     const zoneData = {
@@ -1473,17 +1629,23 @@
       publicNoteInput.value = data.publicNote || 'Không';
     }
 
-    async function signInAdmin() {
-      const email = prompt('Nhập email quản trị:');
-      if (!email) return;
-      const password = prompt('Nhập mật khẩu quản trị:');
-      if (!password) return;
+    async function signInAdmin(email, password) {
+      const cleanEmail = (email || '').trim();
+      if (!cleanEmail || !password) {
+        openAdminLoginModal();
+        return;
+      }
 
       topAdminBtn.textContent = 'Đang đăng nhập...';
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (adminLoginSubmit) adminLoginSubmit.textContent = 'Đang đăng nhập...';
+      if (adminLoginSubmit) adminLoginSubmit.disabled = true;
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email: cleanEmail, password });
       if (error) {
-        alert('Đăng nhập chưa thành công: ' + error.message);
+        showLoginError('Đăng nhập chưa thành công. Anh kiểm tra lại email hoặc mật khẩu nhé.');
         topAdminBtn.textContent = 'Đăng nhập Quản trị';
+        if (adminLoginSubmit) adminLoginSubmit.textContent = 'Đăng nhập';
+        if (adminLoginSubmit) adminLoginSubmit.disabled = false;
         return;
       }
 
@@ -1492,9 +1654,13 @@
       isEditing = false;
       if (loginBtn) loginBtn.classList.add('hidden');
       if (logoutBtn) logoutBtn.classList.remove('hidden');
+      closeAdminLoginModal();
+      if (adminLoginSubmit) adminLoginSubmit.textContent = 'Đăng nhập';
+      if (adminLoginSubmit) adminLoginSubmit.disabled = false;
+      modalAdminPassword.value = '';
       await loadPrivateFromSupabase();
       renderSidebar();
-      alert('Đã đăng nhập quản trị.');
+      showToast('Đã đăng nhập quản trị.');
     }
 
     async function signOutAdmin() {
@@ -1506,11 +1672,25 @@
       if (logoutBtn) logoutBtn.classList.add('hidden');
       if (loginBtn) loginBtn.classList.remove('hidden');
       renderSidebar();
+      showToast('Đã thoát quản trị.');
     }
 
-    if (loginBtn) loginBtn.addEventListener('click', signInAdmin);
+    if (loginBtn) loginBtn.addEventListener('click', openAdminLoginModal);
     if (logoutBtn) logoutBtn.addEventListener('click', signOutAdmin);
-    topAdminBtn.addEventListener('click', () => isAdmin ? signOutAdmin() : signInAdmin());
+    topAdminBtn.addEventListener('click', () => isAdmin ? signOutAdmin() : openAdminLoginModal());
+
+    adminLoginCancel.addEventListener('click', closeAdminLoginModal);
+    adminLoginModal.addEventListener('click', (event) => {
+      if (event.target === adminLoginModal) closeAdminLoginModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && adminLoginModal.classList.contains('is-open')) closeAdminLoginModal();
+    });
+    adminLoginForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      clearLoginError();
+      signInAdmin(modalAdminEmail.value, modalAdminPassword.value);
+    });
 
     const heroSlides = Array.from(document.querySelectorAll('.hero-slide'));
     const heroDots = Array.from(document.querySelectorAll('.hero-dot'));
