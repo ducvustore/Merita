@@ -856,142 +856,44 @@
     }
   </style>
 
-  <style id="mobile-flip-final-fix">
-    /*
-      FINAL MOBILE FIX:
-      iPhone/Zalo/Safari render 3D flip/backface inconsistently.
-      On mobile/touch screens we completely disable 3D and switch faces by display.
-    */
-    @media (max-width: 900px), (hover: none), (pointer: coarse) {
+
+  <style id="mobile-flip-hard-fix">
+    @media (max-width: 900px), (pointer: coarse) {
       .flip-card-wrap { perspective: none !important; }
       .flip-card {
-        display: block !important;
-        position: relative !important;
-        height: auto !important;
-        min-height: 0 !important;
         transform: none !important;
-        -webkit-transform: none !important;
         transform-style: flat !important;
         transition: none !important;
-        overflow: visible !important;
+        min-height: auto !important;
       }
-      .flip-card.is-flipped {
-        transform: none !important;
-        -webkit-transform: none !important;
-      }
+      .flip-card.is-flipped { transform: none !important; }
       .flip-face {
         position: relative !important;
         inset: auto !important;
-        width: 100% !important;
-        min-height: 0 !important;
-        transform: none !important;
-        -webkit-transform: none !important;
+        min-height: 390px;
         backface-visibility: visible !important;
         -webkit-backface-visibility: visible !important;
-        overflow: hidden !important;
-      }
-      .flip-front,
-      .flip-back {
         transform: none !important;
-        -webkit-transform: none !important;
       }
-      .flip-card:not(.is-flipped) .flip-front {
-        display: flex !important;
-        visibility: visible !important;
-        pointer-events: auto !important;
-      }
-      .flip-card:not(.is-flipped) .flip-back {
-        display: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-      }
+      .flip-front { display: flex !important; }
+      .flip-back { display: none !important; }
       .flip-card.is-flipped .flip-front {
         display: none !important;
         visibility: hidden !important;
-        pointer-events: none !important;
-      }
-      .flip-card.is-flipped .flip-front *,
-      .flip-card.is-flipped .unit-photo-img,
-      .flip-card.is-flipped .house-illustration,
-      .flip-card.is-flipped .house-label {
-        display: none !important;
-        visibility: hidden !important;
         opacity: 0 !important;
+        pointer-events: none !important;
       }
       .flip-card.is-flipped .flip-back {
         display: flex !important;
         visibility: visible !important;
+        opacity: 1 !important;
         pointer-events: auto !important;
-        max-height: 560px !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch;
       }
-    }
-
-    body.mobile-safe-flip .flip-card-wrap { perspective: none !important; }
-    body.mobile-safe-flip .flip-card {
-      display: block !important;
-      position: relative !important;
-      height: auto !important;
-      min-height: 0 !important;
-      transform: none !important;
-      -webkit-transform: none !important;
-      transform-style: flat !important;
-      transition: none !important;
-      overflow: visible !important;
-    }
-    body.mobile-safe-flip .flip-card.is-flipped {
-      transform: none !important;
-      -webkit-transform: none !important;
-    }
-    body.mobile-safe-flip .flip-face {
-      position: relative !important;
-      inset: auto !important;
-      width: 100% !important;
-      min-height: 0 !important;
-      transform: none !important;
-      -webkit-transform: none !important;
-      backface-visibility: visible !important;
-      -webkit-backface-visibility: visible !important;
-      overflow: hidden !important;
-    }
-    body.mobile-safe-flip .flip-front,
-    body.mobile-safe-flip .flip-back {
-      transform: none !important;
-      -webkit-transform: none !important;
-    }
-    body.mobile-safe-flip .flip-card:not(.is-flipped) .flip-front {
-      display: flex !important;
-      visibility: visible !important;
-      pointer-events: auto !important;
-    }
-    body.mobile-safe-flip .flip-card:not(.is-flipped) .flip-back {
-      display: none !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
-    body.mobile-safe-flip .flip-card.is-flipped .flip-front {
-      display: none !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
-    body.mobile-safe-flip .flip-card.is-flipped .flip-front *,
-    body.mobile-safe-flip .flip-card.is-flipped .unit-photo-img,
-    body.mobile-safe-flip .flip-card.is-flipped .house-illustration,
-    body.mobile-safe-flip .flip-card.is-flipped .house-label {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-    }
-    body.mobile-safe-flip .flip-card.is-flipped .flip-back {
-      display: flex !important;
-      visibility: visible !important;
-      pointer-events: auto !important;
-      max-height: 560px !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      -webkit-overflow-scrolling: touch;
+      .flip-card.is-flipped .house-label,
+      .flip-card.is-flipped .front-image,
+      .flip-card.is-flipped .front-meta {
+        display: none !important;
+      }
     }
   </style>
 
@@ -1260,16 +1162,12 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const SUPABASE_URL = "https://yclftcrndluqrimazkts.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1mfqo9IGXAXe37Bn4RgvcA_rIeOws6_";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-    function syncMobileSafeFlipMode() {
-      const isTouchDevice = (navigator.maxTouchPoints || 0) > 0;
-      const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
-      const isMobileUA = /Android|iPhone|iPad|iPod|Mobile|Zalo/i.test(navigator.userAgent || '');
-      document.body.classList.toggle('mobile-safe-flip', Boolean(isTouchDevice || isSmallScreen || isMobileUA));
-    }
-    syncMobileSafeFlipMode();
-    window.addEventListener('resize', syncMobileSafeFlipMode);
 
     const zoneData = {
       A:['A1-418','A2-420','A3-422','A4-424','A5-426','A6-428','A7-430','A8-432','A9-434','A10-436','A11-438','A12-440','A13-442','A14-444','A15-446','A16-448','A17-450','A18-452','A19-454','A20-456','A41-39','A40-41','A39-43','A38-45','A37-47','A36-49','A35-51','A34-53','A33-55','A32-57','A31-59','A30-61','A29-63','A28-65','A27-67','A26-69','A25-71','A24-73','A23-75','A22-77','A21-79'],
@@ -1290,11 +1188,13 @@
       'D22-18': { publicStatus:'Nhà thô', publicNote:'Không', ownerName:'', tenantName:'', phone:'', email:'', internalNote:'' }
     };
 
+
     let currentZone = 'A';
     let currentUnit = 'A1-418';
     let isAdmin = false;
     let isEditing = false;
-    let workingData = JSON.parse(JSON.stringify(sampleUnitData));
+    let workingData = {};
+    let currentSession = null;
 
     const unitList = document.getElementById('unitList');
     const zoneButtons = document.querySelectorAll('.zone');
@@ -1337,11 +1237,18 @@
     const editCardNote = document.getElementById('editCardNote');
     const unitPhotoFrame = document.getElementById('unitPhotoFrame');
     const unitPhotoImg = document.getElementById('unitPhotoImg');
-    const unitPhotoPlaceholder = document.getElementById('unitPhotoPlaceholder');
+
+    const allUnitCodes = Object.values(zoneData).flat();
+
+    function getZoneByUnit(unitCode) {
+      return Object.keys(zoneData).find(zone => zoneData[zone].includes(unitCode)) || 'A';
+    }
+
+    function getUnitImagePath(unitCode) {
+      return `units/${unitCode}.jpg`;
+    }
 
     function getUnitImageCandidates(unitCode) {
-      // Ảnh căn để trong folder units, đặt tên theo đúng mã căn.
-      // Web sẽ thử lần lượt các đuôi phổ biến để tránh lỗi .jpg/.jpeg/.png hoặc chữ hoa/thường.
       return [
         `units/${unitCode}.jpg`,
         `units/${unitCode}.jpeg`,
@@ -1352,30 +1259,25 @@
       ];
     }
 
-    function getUnitImagePath(unitCode) {
-      return getUnitImageCandidates(unitCode)[0];
-    }
-
-    let unitPhotoTryIndex = 0;
     let unitPhotoCandidates = [];
+    let unitPhotoTryIndex = 0;
 
-    function showUnitPlaceholder() {
-      unitPhotoFrame.classList.remove('has-unit-photo');
-      unitPhotoImg.classList.add('is-missing');
+    function showUnitPhotoPlaceholder() {
+      if (!unitPhotoImg || !unitPhotoFrame) return;
       unitPhotoImg.removeAttribute('src');
+      unitPhotoImg.classList.add('is-missing');
+      unitPhotoFrame.classList.remove('has-unit-photo');
     }
 
     function loadNextUnitPhotoCandidate() {
+      if (!unitPhotoImg || !unitPhotoFrame) return;
       if (unitPhotoTryIndex >= unitPhotoCandidates.length) {
-        showUnitPlaceholder();
+        showUnitPhotoPlaceholder();
         return;
       }
-
       const nextPath = unitPhotoCandidates[unitPhotoTryIndex];
       unitPhotoImg.classList.add('is-missing');
       unitPhotoFrame.classList.remove('has-unit-photo');
-
-      // Dùng Image() để kiểm tra trước, giúp ổn định hơn khi mở trực tiếp file local hoặc chạy GitHub Pages.
       const tester = new Image();
       tester.onload = () => {
         unitPhotoImg.src = nextPath;
@@ -1390,6 +1292,7 @@
     }
 
     function loadUnitPhoto(unitCode, customImagePath) {
+      if (!unitPhotoImg) return;
       unitPhotoImg.alt = `Hình ảnh căn ${unitCode}`;
       unitPhotoTryIndex = 0;
       const defaultCandidates = getUnitImageCandidates(unitCode);
@@ -1399,21 +1302,87 @@
       loadNextUnitPhotoCandidate();
     }
 
+    function makeDefaultUnitData(unitCode) {
+      const seeded = sampleUnitData[unitCode] || {};
+      return {
+        publicStatus: seeded.publicStatus || 'Đang ở',
+        publicNote: seeded.publicNote || 'Không',
+        ownerName: seeded.ownerName || '',
+        tenantName: seeded.tenantName || '',
+        phone: seeded.phone || '',
+        email: seeded.email || '',
+        internalNote: seeded.internalNote || '',
+        paymentStatus: seeded.paymentStatus || '',
+        residentInfo: seeded.residentInfo || '',
+        image: seeded.image || getUnitImagePath(unitCode)
+      };
+    }
+
+    function initLocalData() {
+      workingData = {};
+      allUnitCodes.forEach(code => { workingData[code] = makeDefaultUnitData(code); });
+    }
+
+    async function loadUnitsFromSupabase() {
+      const { data, error } = await supabaseClient
+        .from('units')
+        .select('code, zone, status_public, note_public, extra_public, image_path')
+        .order('id', { ascending: true });
+
+      if (error) {
+        console.warn('Không tải được units từ Supabase:', error.message);
+        if (saveStatus) saveStatus.textContent = 'Chưa tải được dữ liệu Supabase, đang dùng dữ liệu local tạm.';
+        return;
+      }
+
+      if (!data || !data.length) return;
+
+      data.forEach(row => {
+        const code = row.code;
+        if (!workingData[code]) workingData[code] = makeDefaultUnitData(code);
+        workingData[code] = {
+          ...workingData[code],
+          publicStatus: row.status_public || 'Đang ở',
+          publicNote: row.note_public || 'Không',
+          extraPublic: row.extra_public || 'Không',
+          image: row.image_path || getUnitImagePath(code)
+        };
+      });
+    }
+
+    async function loadPrivateFromSupabase() {
+      if (!isAdmin) return;
+      const { data, error } = await supabaseClient
+        .from('unit_private')
+        .select('unit_code, owner_name, tenant_name, phone, resident_info, payment_status, admin_note');
+
+      if (error) {
+        console.warn('Không tải được unit_private:', error.message);
+        if (saveStatus) saveStatus.textContent = 'Tài khoản chưa có quyền đọc thông tin chi tiết hoặc policy chưa đúng.';
+        return;
+      }
+
+      (data || []).forEach(row => {
+        const code = row.unit_code;
+        if (!workingData[code]) workingData[code] = makeDefaultUnitData(code);
+        workingData[code] = {
+          ...workingData[code],
+          ownerName: row.owner_name || '',
+          tenantName: row.tenant_name || '',
+          phone: row.phone || '',
+          residentInfo: row.resident_info || '',
+          paymentStatus: row.payment_status || '',
+          internalNote: row.admin_note || ''
+        };
+      });
+    }
+
     function getRows(zone) {
       return [{ label:`Khu ${zone} · Tất cả căn`, units: zoneData[zone] || [] }];
     }
 
     function getWorkingUnitData(unitCode) {
-      return workingData[unitCode] || {
-        publicStatus:'Đang ở',
-        publicNote:'Không',
-        ownerName:'',
-        tenantName:'',
-        phone:'',
-        email:'',
-        internalNote:'',
-        image: getUnitImagePath(unitCode)
-      };
+      return workingData[unitCode] || makeDefaultUnitData(unitCode);
     }
 
     function renderZone(zone) {
@@ -1426,7 +1395,6 @@
         const card = document.createElement('div');
         card.className = 'row-card';
         card.innerHTML = `<div class="row-head"><h3 class="row-name">${row.label}</h3><div class="chip">${row.units.length} căn</div></div>`;
-
         const grid = document.createElement('div');
         grid.className = 'unit-grid';
 
@@ -1438,6 +1406,7 @@
           btn.addEventListener('click', () => {
             currentUnit = unitCode;
             isEditing = false;
+            detailFlipCard.classList.remove('is-flipped');
             renderZone(currentZone);
             renderSidebar();
           });
@@ -1461,12 +1430,11 @@
       topAdminBtn.classList.toggle('is-admin', isAdmin);
 
       unitCodeValue.textContent = currentUnit;
-      publicStatusValue.textContent = data.publicStatus;
-      publicNoteValue.textContent = data.publicNote;
+      publicStatusValue.textContent = data.publicStatus || 'Đang ở';
+      publicNoteValue.textContent = data.publicNote || 'Không';
 
       photoUnitLabel.textContent = `Căn ${currentUnit}`;
-      const unitImagePath = data.image || getUnitImagePath(currentUnit);
-      loadUnitPhoto(currentUnit, unitImagePath);
+      loadUnitPhoto(currentUnit, data.image || getUnitImagePath(currentUnit));
       photoCardTitle.textContent = `Hình ảnh căn ${currentUnit}`;
       photoCardSub.textContent = isAdmin
         ? 'Anh đã đăng nhập quản trị. Bấm vào thẻ này để xoay qua phần thông tin xem nhanh của căn.'
@@ -1476,8 +1444,8 @@
       flipOwnerValue.textContent = data.ownerName || 'Chưa cập nhật';
       flipTenantValue.textContent = data.tenantName || 'Chưa cập nhật';
       flipPhoneValue.textContent = data.phone || 'Chưa cập nhật';
-      flipDebtValue.textContent = 'Đang theo dõi công nợ của căn này.';
-      flipPublicNoteValue.textContent = data.publicNote || 'Chưa có ghi chú public.';
+      flipDebtValue.textContent = data.paymentStatus || 'Đang theo dõi công nợ của căn này.';
+      flipPublicNoteValue.textContent = data.publicNote || 'Không';
       flipHint.textContent = isAdmin
         ? '🔄 Đã đăng nhập quản trị · bấm vào thẻ để lật qua mặt thông tin'
         : '🔒 Chưa đăng nhập quản trị · hiện đang xem mặt hình ảnh';
@@ -1488,6 +1456,7 @@
       editCardNote.textContent = isEditing
         ? 'Form chỉnh sửa đang mở bên dưới cho căn này.'
         : 'Mở form chỉnh sửa của căn này ở bên dưới.';
+
       if (!isAdmin) {
         detailFlipCard.classList.remove('is-flipped');
         isEditing = false;
@@ -1499,38 +1468,49 @@
       ownerInput.value = data.ownerName || '';
       tenantInput.value = data.tenantName || '';
       phoneInput.value = data.phone || '';
-      emailInput.value = data.email || '';
-      statusInput.value = data.publicStatus || 'Chưa cập nhật';
+      if (emailInput) emailInput.value = data.email || '';
+      statusInput.value = data.publicStatus || 'Đang ở';
       publicNoteInput.value = data.publicNote || 'Không';
     }
 
-    loginBtn.addEventListener('click', () => {
+    async function signInAdmin() {
+      const email = prompt('Nhập email quản trị:');
+      if (!email) return;
+      const password = prompt('Nhập mật khẩu quản trị:');
+      if (!password) return;
+
+      topAdminBtn.textContent = 'Đang đăng nhập...';
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('Đăng nhập chưa thành công: ' + error.message);
+        topAdminBtn.textContent = 'Đăng nhập Quản trị';
+        return;
+      }
+
+      currentSession = data.session;
       isAdmin = true;
       isEditing = false;
-      loginBtn.classList.add('hidden');
-      logoutBtn.classList.remove('hidden');
-      authStatus.textContent = '';
+      if (loginBtn) loginBtn.classList.add('hidden');
+      if (logoutBtn) logoutBtn.classList.remove('hidden');
+      await loadPrivateFromSupabase();
       renderSidebar();
-    });
+      alert('Đã đăng nhập quản trị.');
+    }
 
-    logoutBtn.addEventListener('click', () => {
+    async function signOutAdmin() {
+      await supabaseClient.auth.signOut();
+      currentSession = null;
       isAdmin = false;
       isEditing = false;
-      logoutBtn.classList.add('hidden');
-      loginBtn.classList.remove('hidden');
-      authStatus.textContent = '';
+      detailFlipCard.classList.remove('is-flipped');
+      if (logoutBtn) logoutBtn.classList.add('hidden');
+      if (loginBtn) loginBtn.classList.remove('hidden');
       renderSidebar();
-    });
+    }
 
-    topAdminBtn.addEventListener('click', () => {
-      if (!isAdmin) {
-        loginBtn.click();
-      } else {
-        logoutBtn.click();
-      }
-    });
-
-
+    if (loginBtn) loginBtn.addEventListener('click', signInAdmin);
+    if (logoutBtn) logoutBtn.addEventListener('click', signOutAdmin);
+    topAdminBtn.addEventListener('click', () => isAdmin ? signOutAdmin() : signInAdmin());
 
     const heroSlides = Array.from(document.querySelectorAll('.hero-slide'));
     const heroDots = Array.from(document.querySelectorAll('.hero-dot'));
@@ -1547,7 +1527,6 @@
 
     function nextHeroSlide() { showHeroSlide(currentHeroSlide + 1); }
     function prevHeroSlide() { showHeroSlide(currentHeroSlide - 1); }
-
     heroNext.addEventListener('click', (event) => { event.stopPropagation(); nextHeroSlide(); });
     heroPrev.addEventListener('click', (event) => { event.stopPropagation(); prevHeroSlide(); });
     heroDots.forEach(dot => {
@@ -1558,24 +1537,64 @@
     });
     heroSlider.addEventListener('click', nextHeroSlide);
 
-    saveBtn.addEventListener('click', () => {
-      workingData[currentUnit] = {
+    saveBtn.addEventListener('click', async () => {
+      if (!isAdmin) return;
+      const current = getWorkingUnitData(currentUnit);
+      const nextData = {
+        ...current,
         publicStatus: statusInput.value,
         publicNote: publicNoteInput.value.trim() || 'Không',
         ownerName: ownerInput.value.trim(),
         tenantName: tenantInput.value.trim(),
         phone: phoneInput.value.trim(),
-        email: emailInput.value.trim(),
-        internalNote: (getWorkingUnitData(currentUnit).internalNote || ''),
-        image: (getWorkingUnitData(currentUnit).image || getUnitImagePath(currentUnit))
+        email: emailInput ? emailInput.value.trim() : '',
+        image: current.image || getUnitImagePath(currentUnit)
       };
-      saveStatus.textContent = 'Đã lưu vào dữ liệu demo trên giao diện. Bước sau sẽ nối lưu thật xuống Supabase.';
+
+      saveStatus.textContent = 'Đang lưu lên Supabase...';
+
+      const { error: publicError } = await supabaseClient
+        .from('units')
+        .update({
+          status_public: nextData.publicStatus,
+          note_public: nextData.publicNote,
+          image_path: nextData.image
+        })
+        .eq('code', currentUnit);
+
+      if (publicError) {
+        saveStatus.textContent = 'Lưu thông tin public chưa thành công: ' + publicError.message;
+        return;
+      }
+
+      const { error: privateError } = await supabaseClient
+        .from('unit_private')
+        .upsert({
+          unit_code: currentUnit,
+          owner_name: nextData.ownerName,
+          tenant_name: nextData.tenantName,
+          phone: nextData.phone,
+          resident_info: nextData.email || nextData.residentInfo || '',
+          payment_status: nextData.paymentStatus || '',
+          admin_note: nextData.internalNote || ''
+        }, { onConflict: 'unit_code' });
+
+      if (privateError) {
+        saveStatus.textContent = 'Lưu thông tin chi tiết chưa thành công: ' + privateError.message;
+        return;
+      }
+
+      workingData[currentUnit] = nextData;
+      saveStatus.textContent = 'Đã lưu thay đổi lên Supabase.';
       renderSidebar();
     });
 
-    resetBtn.addEventListener('click', () => {
-      workingData = JSON.parse(JSON.stringify(sampleUnitData));
-      saveStatus.textContent = 'Đã khôi phục dữ liệu mẫu của bản demo.';
+    resetBtn.addEventListener('click', async () => {
+      saveStatus.textContent = 'Đang tải lại dữ liệu từ Supabase...';
+      initLocalData();
+      await loadUnitsFromSupabase();
+      if (isAdmin) await loadPrivateFromSupabase();
+      saveStatus.textContent = 'Đã tải lại dữ liệu từ Supabase.';
       renderSidebar();
     });
 
@@ -1588,7 +1607,6 @@
       });
     });
 
-
     editInfoBtn.addEventListener('click', (event) => {
       event.stopPropagation();
       if (!isAdmin) return;
@@ -1599,7 +1617,6 @@
       ownerInput.focus({ preventScroll:true });
     });
 
-
     detailFlipCard.addEventListener('click', () => {
       if (!isAdmin) return;
       detailFlipCard.classList.toggle('is-flipped');
@@ -1609,6 +1626,7 @@
       currentZone = zone;
       currentUnit = zoneData[currentZone][0];
       isEditing = false;
+      detailFlipCard.classList.remove('is-flipped');
       renderZone(currentZone);
       renderSidebar();
     }
@@ -1623,8 +1641,21 @@
       });
     });
 
-    renderZone(currentZone);
-    renderSidebar();
+    async function bootstrap() {
+      initLocalData();
+      renderZone(currentZone);
+      renderSidebar();
+      await loadUnitsFromSupabase();
+      const { data } = await supabaseClient.auth.getSession();
+      currentSession = data.session;
+      isAdmin = !!currentSession;
+      if (isAdmin) await loadPrivateFromSupabase();
+      renderZone(currentZone);
+      renderSidebar();
+      if (saveStatus) saveStatus.textContent = 'Đã kết nối Supabase.';
+    }
+
+    bootstrap();
   </script>
 </body>
 </html>
