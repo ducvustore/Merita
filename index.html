@@ -1221,6 +1221,14 @@
       font-size:13px !important;
       min-width:auto !important;
     }
+
+    .logs-save-note {
+      color:#60737f;
+      font-size:13px;
+      line-height:1.5;
+      min-height:18px;
+      margin-top:2px;
+    }
     .log-help {
       color:#6b7d88;
       font-size:13px;
@@ -1538,6 +1546,8 @@
 
             <div class="log-toolbar">
               <button class="btn ghost small-log-btn" id="addLogBtn" type="button">+ Thêm dòng</button>
+              <button class="btn small-log-btn" id="saveLogsBtn" type="button">Lưu mục này</button>
+              <span class="logs-save-note" id="logsSaveStatus"></span>
             </div>
 
             <div id="debtsTab" class="log-tab-panel" data-log-type="debts"></div>
@@ -1724,6 +1734,8 @@
     const residentListEditor = document.getElementById('residentListEditor');
     const addResidentBtn = document.getElementById('addResidentBtn');
     const addLogBtn = document.getElementById('addLogBtn');
+    const saveLogsBtn = document.getElementById('saveLogsBtn');
+    const logsSaveStatus = document.getElementById('logsSaveStatus');
     const logTabPanels = {
       debts: document.getElementById('debtsTab'),
       incidents: document.getElementById('incidentsTab'),
@@ -2213,6 +2225,21 @@
       return null;
     }
 
+    async function saveCurrentLogsOnly() {
+      if (!isAdmin || !currentUnit) return;
+      if (logsSaveStatus) logsSaveStatus.textContent = 'Đang lưu...';
+      const logsError = await saveLogsToSupabase(currentUnit);
+      if (logsError) {
+        if (logsSaveStatus) logsSaveStatus.textContent = 'Lưu chưa thành công: ' + logsError.message;
+        if (saveStatus) saveStatus.textContent = 'Lưu công nợ/sự vụ/ghi chú chưa thành công: ' + logsError.message;
+        return;
+      }
+      await loadLogsFromSupabase();
+      renderAllLogEditors();
+      if (logsSaveStatus) logsSaveStatus.textContent = 'Đã lưu mục này lên Supabase.';
+      if (saveStatus) saveStatus.textContent = 'Đã lưu công nợ/sự vụ/ghi chú lên Supabase.';
+    }
+
     function getRows(zone) {
       return [{ label:`Khu ${zone} · Tất cả căn`, units: zoneData[zone] || [] }];
     }
@@ -2385,6 +2412,7 @@
 
     if (addResidentBtn) addResidentBtn.addEventListener('click', addResidentRow);
     if (addLogBtn) addLogBtn.addEventListener('click', addLogRow);
+    if (saveLogsBtn) saveLogsBtn.addEventListener('click', saveCurrentLogsOnly);
 
     ['pointerdown', 'touchstart', 'mousedown'].forEach(eventName => {
       [editInfoBtn, backToPhotoBtn].filter(Boolean).forEach(btn => {
