@@ -329,6 +329,7 @@
     .quick-box.full { grid-column:1/-1; }
     .photo-tag { padding:7px 12px; border-radius:999px; background:#e9f6ef; color:#297a47; font-size:12px; font-weight:850; white-space:nowrap; }
     .back-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:auto; padding-top:4px; }
+    .back-photo-btn { padding:10px 13px; font-size:13px; box-shadow:none !important; }
     .edit-card-note { color:#60737f; font-size:13px; line-height:1.55; }
     .hidden { display:none !important; }
     @media (max-width:1180px) { .layout { grid-template-columns:1fr; } .hero-top { grid-template-columns:1fr; } .auth-box { max-width:none; } }
@@ -1204,6 +1205,84 @@
     .back-actions { position: relative; z-index: 20; }
   </style>
 
+
+
+  <style id="log-editor-overrides">
+    .log-toolbar {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:12px 0 10px;
+    }
+    .small-log-btn {
+      padding:9px 13px !important;
+      border-radius:14px !important;
+      font-size:13px !important;
+      min-width:auto !important;
+    }
+    .log-help {
+      color:#6b7d88;
+      font-size:13px;
+      line-height:1.55;
+    }
+    .log-tab-panel {
+      display:grid;
+      gap:12px;
+      margin-top:8px;
+    }
+    .log-editor-item {
+      border:1px solid rgba(183,214,207,.72);
+      border-radius:20px;
+      padding:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.86), rgba(250,253,253,.76));
+      box-shadow:0 10px 24px rgba(8,47,45,.055);
+    }
+    .log-editor-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .log-editor-title {
+      font-weight:900;
+      color:#123d3a;
+      font-size:14px;
+    }
+    .log-remove-btn {
+      border:none;
+      cursor:pointer;
+      border-radius:999px;
+      padding:8px 11px;
+      background:#fff1f2;
+      color:#be123c;
+      font-weight:900;
+      font-family:inherit;
+    }
+    .log-editor-grid {
+      display:grid;
+      grid-template-columns:minmax(130px,.5fr) minmax(0,1.5fr);
+      gap:11px;
+    }
+    .log-editor-grid .full { grid-column:1/-1; }
+    .log-content-input {
+      min-height:138px !important;
+      line-height:1.65;
+    }
+    .log-empty {
+      padding:18px;
+      border-radius:18px;
+      border:1px dashed rgba(183,214,207,.9);
+      background:rgba(255,255,255,.58);
+      color:#6b7d88;
+      line-height:1.6;
+    }
+    @media (max-width:640px) {
+      .log-editor-grid { grid-template-columns:1fr; }
+      .log-content-input { min-height:160px !important; }
+    }
+  </style>
 </head>
 <body>
   <div class="page">
@@ -1386,6 +1465,7 @@
 
                   <div class="back-actions">
                     <button class="btn" id="editInfoBtn" type="button">✏️ Edit thông tin</button>
+                    <button class="btn ghost back-photo-btn" id="backToPhotoBtn" type="button">↩ Xem hình ảnh</button>
                     <span class="edit-card-note" id="editCardNote">Mở form chỉnh sửa của căn này ở bên dưới.</span>
                   </div>
                 </div>
@@ -1456,29 +1536,13 @@
               <button class="tab" data-tab="notes" type="button">Ghi chú</button>
             </div>
 
-            <div id="debtsTab">
-              <div class="log-item">
-                <div class="log-date">Kỳ 03/2026</div>
-                <div class="log-title">Phí quản lý · 1.250.000đ</div>
-                <div class="log-text">Trạng thái: Chưa thanh toán. Ghi chú: đang theo dõi đối chiếu.</div>
-              </div>
+            <div class="log-toolbar">
+              <button class="btn ghost small-log-btn" id="addLogBtn" type="button">+ Thêm dòng</button>
             </div>
 
-            <div id="incidentsTab" class="hidden">
-              <div class="log-item">
-                <div class="log-date">12/04/2026</div>
-                <div class="log-title">Phản ánh tiếng ồn sau 22h</div>
-                <div class="log-text">Đã tiếp nhận và nhắc nhở. Trạng thái: Đang theo dõi tái diễn.</div>
-              </div>
-            </div>
-
-            <div id="notesTab" class="hidden">
-              <div class="log-item">
-                <div class="log-date">Ghi chú</div>
-                <div class="log-title">Lịch sử làm việc với cư dân</div>
-                <div class="log-text">Khối này mô phỏng khu vực lưu note dài để thuận tiện nhập nhiều phát sinh theo từng căn.</div>
-              </div>
-            </div>
+            <div id="debtsTab" class="log-tab-panel" data-log-type="debts"></div>
+            <div id="incidentsTab" class="log-tab-panel hidden" data-log-type="incidents"></div>
+            <div id="notesTab" class="log-tab-panel hidden" data-log-type="notes"></div>
           </div>
         </div>
       </aside>
@@ -1610,6 +1674,8 @@
     let isEditing = false;
     let workingData = {};
     let residentData = {};
+    let logData = {};
+    let currentLogType = 'debts';
     let currentSession = null;
 
     const unitList = document.getElementById('unitList');
@@ -1651,11 +1717,23 @@
     const flipDebtValue = document.getElementById('flipDebtValue');
     const flipPublicNoteValue = document.getElementById('flipPublicNoteValue');
     const editInfoBtn = document.getElementById('editInfoBtn');
+    const backToPhotoBtn = document.getElementById('backToPhotoBtn');
     const editCardNote = document.getElementById('editCardNote');
     const unitPhotoFrame = document.getElementById('unitPhotoFrame');
     const unitPhotoImg = document.getElementById('unitPhotoImg');
     const residentListEditor = document.getElementById('residentListEditor');
     const addResidentBtn = document.getElementById('addResidentBtn');
+    const addLogBtn = document.getElementById('addLogBtn');
+    const logTabPanels = {
+      debts: document.getElementById('debtsTab'),
+      incidents: document.getElementById('incidentsTab'),
+      notes: document.getElementById('notesTab')
+    };
+    const logTypeLabels = {
+      debts: 'Công nợ',
+      incidents: 'Sự vụ',
+      notes: 'Ghi chú'
+    };
 
     function shouldUseMobileFlipMode() {
       const ua = navigator.userAgent || '';
@@ -1980,6 +2058,161 @@
       return null;
     }
 
+    async function loadLogsFromSupabase() {
+      if (!isAdmin) return;
+      const { data, error } = await supabaseClient
+        .from('unit_logs')
+        .select('id, unit_code, log_type, log_date, title, content')
+        .order('unit_code', { ascending: true })
+        .order('log_date', { ascending: false })
+        .order('id', { ascending: false });
+
+      if (error) {
+        console.warn('Không tải được unit_logs:', error.message);
+        if (saveStatus) saveStatus.textContent = 'Chưa tải được phần sự vụ/ghi chú. Anh kiểm tra cột log_type trong bảng unit_logs nhé.';
+        return;
+      }
+
+      logData = {};
+      (data || []).forEach(row => {
+        const unitCode = row.unit_code;
+        const type = row.log_type || 'incidents';
+        if (!logData[unitCode]) logData[unitCode] = { debts: [], incidents: [], notes: [] };
+        if (!logData[unitCode][type]) logData[unitCode][type] = [];
+        logData[unitCode][type].push({
+          id: row.id,
+          logType: type,
+          logDate: row.log_date || '',
+          title: row.title || '',
+          content: row.content || ''
+        });
+      });
+    }
+
+    function getUnitLogs(unitCode, type) {
+      const byUnit = logData[unitCode] || { debts: [], incidents: [], notes: [] };
+      return byUnit[type] || [];
+    }
+
+    function makeLogRow(log = {}, index = 0, type = currentLogType) {
+      const row = document.createElement('div');
+      row.className = 'log-editor-item';
+      row.dataset.logId = log.id || '';
+      row.dataset.logType = type;
+      row.innerHTML = `
+        <div class="log-editor-head">
+          <div class="log-editor-title">${escapeHtml(logTypeLabels[type] || 'Nội dung')} ${index + 1}</div>
+          <button class="log-remove-btn" type="button">Xóa</button>
+        </div>
+        <div class="log-editor-grid">
+          <div class="field">
+            <label>${type === 'debts' ? 'Kỳ / Ngày' : 'Ngày'}</label>
+            <input class="input log-date-input" placeholder="VD: 12/04/2026 hoặc Kỳ 03/2026" value="${escapeHtml(log.logDate || '')}">
+          </div>
+          <div class="field">
+            <label>${type === 'debts' ? 'Khoản / Tiêu đề' : 'Tiêu đề'}</label>
+            <input class="input log-title-input" placeholder="Nhập tiêu đề" value="${escapeHtml(log.title || '')}">
+          </div>
+          <div class="field full">
+            <label>${type === 'notes' ? 'Ghi chú dài' : 'Nội dung chi tiết'}</label>
+            <textarea class="textarea log-content-input" placeholder="Nhập nội dung dài ở đây...">${escapeHtml(log.content || '')}</textarea>
+          </div>
+        </div>
+      `;
+      row.querySelector('.log-remove-btn').addEventListener('click', () => {
+        row.remove();
+        renumberLogRows(type);
+        const panel = logTabPanels[type];
+        if (panel && !panel.querySelector('.log-editor-item')) renderLogEditor(type);
+      });
+      return row;
+    }
+
+    function renumberLogRows(type) {
+      const panel = logTabPanels[type];
+      if (!panel) return;
+      Array.from(panel.querySelectorAll('.log-editor-title')).forEach((title, index) => {
+        title.textContent = `${logTypeLabels[type] || 'Nội dung'} ${index + 1}`;
+      });
+    }
+
+    function renderLogEditor(type = currentLogType) {
+      const panel = logTabPanels[type];
+      if (!panel) return;
+      panel.innerHTML = '';
+      const logs = getUnitLogs(currentUnit, type);
+      if (!logs.length) {
+        const empty = document.createElement('div');
+        empty.className = 'log-empty';
+        empty.textContent = `Chưa có ${String(logTypeLabels[type] || 'nội dung').toLowerCase()} cho căn này. Bấm “+ Thêm dòng” để nhập.`;
+        panel.appendChild(empty);
+        return;
+      }
+      logs.forEach((log, index) => panel.appendChild(makeLogRow(log, index, type)));
+    }
+
+    function renderAllLogEditors() {
+      ['debts', 'incidents', 'notes'].forEach(type => renderLogEditor(type));
+    }
+
+    function addLogRow() {
+      const panel = logTabPanels[currentLogType];
+      if (!panel) return;
+      const empty = panel.querySelector('.log-empty');
+      if (empty) empty.remove();
+      panel.appendChild(makeLogRow({}, panel.querySelectorAll('.log-editor-item').length, currentLogType));
+    }
+
+    function collectLogsFromPanel(type) {
+      const panel = logTabPanels[type];
+      if (!panel) return [];
+      return Array.from(panel.querySelectorAll('.log-editor-item')).map((row, index) => ({
+        id: row.dataset.logId || null,
+        logType: type,
+        logDate: row.querySelector('.log-date-input')?.value.trim() || '',
+        title: row.querySelector('.log-title-input')?.value.trim() || '',
+        content: row.querySelector('.log-content-input')?.value.trim() || '',
+        sortOrder: index
+      })).filter(item => item.logDate || item.title || item.content);
+    }
+
+    function collectAllLogsFromEditor() {
+      return {
+        debts: collectLogsFromPanel('debts'),
+        incidents: collectLogsFromPanel('incidents'),
+        notes: collectLogsFromPanel('notes')
+      };
+    }
+
+    async function saveLogsToSupabase(unitCode) {
+      const collected = collectAllLogsFromEditor();
+      const { error: deleteError } = await supabaseClient
+        .from('unit_logs')
+        .delete()
+        .eq('unit_code', unitCode);
+
+      if (deleteError) return deleteError;
+
+      const rows = [];
+      ['debts', 'incidents', 'notes'].forEach(type => {
+        collected[type].forEach(item => rows.push({
+          unit_code: unitCode,
+          log_type: type,
+          log_date: item.logDate || null,
+          title: item.title || (logTypeLabels[type] || 'Nội dung'),
+          content: item.content || ''
+        }));
+      });
+
+      if (rows.length) {
+        const { error: insertError } = await supabaseClient.from('unit_logs').insert(rows);
+        if (insertError) return insertError;
+      }
+
+      logData[unitCode] = collected;
+      return null;
+    }
+
     function getRows(zone) {
       return [{ label:`Khu ${zone} · Tất cả căn`, units: zoneData[zone] || [] }];
     }
@@ -2076,6 +2309,7 @@
       statusInput.value = data.publicStatus || 'Đang ở';
       publicNoteInput.value = data.publicNote || 'Không';
       renderResidentEditor();
+      renderAllLogEditors();
     }
 
     async function signInAdmin(email, password) {
@@ -2109,6 +2343,7 @@
       modalAdminPassword.value = '';
       await loadPrivateFromSupabase();
       await loadResidentsFromSupabase();
+      await loadLogsFromSupabase();
       renderSidebar();
       showToast('Đã đăng nhập quản trị.');
     }
@@ -2149,12 +2384,15 @@
     });
 
     if (addResidentBtn) addResidentBtn.addEventListener('click', addResidentRow);
+    if (addLogBtn) addLogBtn.addEventListener('click', addLogRow);
 
     ['pointerdown', 'touchstart', 'mousedown'].forEach(eventName => {
-      editInfoBtn.addEventListener(eventName, (event) => {
-        event.stopPropagation();
-        if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-      }, true);
+      [editInfoBtn, backToPhotoBtn].filter(Boolean).forEach(btn => {
+        btn.addEventListener(eventName, (event) => {
+          event.stopPropagation();
+          if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+        }, true);
+      });
     });
 
     const heroSlides = Array.from(document.querySelectorAll('.hero-slide'));
@@ -2235,6 +2473,13 @@
         return;
       }
 
+      const logsError = await saveLogsToSupabase(currentUnit);
+      if (logsError) {
+        saveStatus.textContent = 'Lưu công nợ/sự vụ/ghi chú chưa thành công: ' + logsError.message;
+        return;
+      }
+
+      await loadLogsFromSupabase();
       workingData[currentUnit] = nextData;
       saveStatus.textContent = 'Đã lưu thay đổi lên Supabase.';
       renderSidebar();
@@ -2247,6 +2492,7 @@
       if (isAdmin) {
         await loadPrivateFromSupabase();
         await loadResidentsFromSupabase();
+        await loadLogsFromSupabase();
       }
       saveStatus.textContent = 'Đã tải lại dữ liệu từ Supabase.';
       renderSidebar();
@@ -2254,10 +2500,12 @@
 
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
+        currentLogType = tab.dataset.tab || 'debts';
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         ['debtsTab','incidentsTab','notesTab'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        document.getElementById(tab.dataset.tab + 'Tab').classList.remove('hidden');
+        document.getElementById(currentLogType + 'Tab').classList.remove('hidden');
+        renderLogEditor(currentLogType);
       });
     });
 
@@ -2279,6 +2527,15 @@
     }
 
     editInfoBtn.addEventListener('click', openEditPanel, true);
+
+    if (backToPhotoBtn) {
+      backToPhotoBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+        setFlipCardFlipped(false);
+      }, true);
+    }
 
     detailFlipCard.addEventListener('click', (event) => {
       if (!isAdmin) return;
@@ -2321,6 +2578,7 @@
       if (isAdmin) {
         await loadPrivateFromSupabase();
         await loadResidentsFromSupabase();
+        await loadLogsFromSupabase();
       }
       renderZone(currentZone);
       renderSidebar();
