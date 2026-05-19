@@ -857,6 +857,86 @@
   </style>
 
 
+
+
+  <style id="resident-editor-overrides">
+    .resident-editor {
+      grid-column: 1 / -1;
+      margin-top: 12px;
+      padding: 16px;
+      border: 1px solid rgba(183,214,207,.78);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(250,253,253,.72));
+    }
+    .resident-editor-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .resident-editor-head h4 {
+      margin:0;
+      color:var(--deep);
+      font-size:18px;
+      letter-spacing:-.02em;
+    }
+    .resident-list-editor { display:grid; gap:12px; }
+    .resident-row {
+      border:1px solid rgba(183,214,207,.72);
+      border-radius:20px;
+      padding:12px;
+      background:rgba(255,255,255,.82);
+      box-shadow:0 10px 22px rgba(8,47,45,.045);
+    }
+    .resident-row-top {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .resident-row-title {
+      font-size:13px;
+      font-weight:900;
+      color:#526a72;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .resident-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .resident-grid .field.full { grid-column:1/-1; }
+    .resident-remove-btn {
+      border:none;
+      cursor:pointer;
+      border-radius:999px;
+      padding:8px 11px;
+      font-family:inherit;
+      font-size:12px;
+      font-weight:900;
+      color:#9f1239;
+      background:#fff1f2;
+      border:1px solid #fecdd3;
+    }
+    .resident-empty {
+      padding:12px 14px;
+      border:1px dashed rgba(183,214,207,.9);
+      border-radius:16px;
+      color:#6a7d7d;
+      background:rgba(255,255,255,.64);
+      line-height:1.55;
+    }
+    @media (max-width:640px) {
+      .resident-editor { padding:12px; }
+      .resident-editor-head { align-items:flex-start; flex-direction:column; }
+      .resident-grid { grid-template-columns:1fr; }
+    }
+  </style>
+
+
   <style id="mobile-flip-hard-fix">
     @media (max-width: 900px), (pointer: coarse) {
       .flip-card-wrap { perspective: none !important; }
@@ -897,6 +977,57 @@
     }
   </style>
 
+
+  <style id="mobile-flip-final-force-fix">
+    /* Force mobile/Zalo/iPhone to use simple show/hide instead of 3D flip */
+    body.mobile-flip-mode .flip-card-wrap { perspective: none !important; }
+    body.mobile-flip-mode .flip-card {
+      transform: none !important;
+      transform-style: flat !important;
+      transition: none !important;
+      min-height: auto !important;
+      height: auto !important;
+      cursor: pointer;
+    }
+    body.mobile-flip-mode .flip-card.is-flipped { transform: none !important; }
+    body.mobile-flip-mode .flip-face {
+      position: relative !important;
+      inset: auto !important;
+      width: 100% !important;
+      min-height: 390px !important;
+      backface-visibility: visible !important;
+      -webkit-backface-visibility: visible !important;
+      transform: none !important;
+    }
+    body.mobile-flip-mode .flip-front { display: flex !important; }
+    body.mobile-flip-mode .flip-back { display: none !important; }
+    body.mobile-flip-mode .flip-card.is-flipped .flip-front {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+    body.mobile-flip-mode .flip-card.is-flipped .flip-back {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      height: auto !important;
+      min-height: 390px !important;
+    }
+    body.mobile-flip-mode .flip-card.is-flipped .house-label,
+    body.mobile-flip-mode .flip-card.is-flipped .front-image,
+    body.mobile-flip-mode .flip-card.is-flipped .front-meta,
+    body.mobile-flip-mode .flip-card.is-flipped #unitPhotoImg,
+    body.mobile-flip-mode .flip-card.is-flipped #unitPhotoFrame {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+  </style>
 
   <style id="custom-auth-modal-overrides">
     .auth-modal {
@@ -1020,6 +1151,57 @@
       .auth-dialog-actions .btn { flex: 1; }
       .app-toast { border-radius: 20px; bottom: 14px; }
     }
+  </style>
+
+
+
+  <style id="safe-flip-all-devices-fix">
+    /* Stable flip mode for all devices: no 3D transform, no mirrored backface, no image overlay. */
+    .flip-card-wrap { perspective: none !important; }
+    .flip-card {
+      transform: none !important;
+      transform-style: flat !important;
+      transition: none !important;
+      height: auto !important;
+      min-height: auto !important;
+    }
+    .flip-card.is-flipped { transform: none !important; }
+    .flip-face {
+      position: relative !important;
+      inset: auto !important;
+      width: 100% !important;
+      backface-visibility: visible !important;
+      -webkit-backface-visibility: visible !important;
+      transform: none !important;
+    }
+    .flip-front { display: flex !important; }
+    .flip-back { display: none !important; min-height: 430px; }
+    .flip-card.is-flipped .flip-front {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+    .flip-card.is-flipped .flip-back {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      height: auto !important;
+    }
+    .flip-card.is-flipped .house-label,
+    .flip-card.is-flipped .front-image,
+    .flip-card.is-flipped .front-meta,
+    .flip-card.is-flipped #unitPhotoImg,
+    .flip-card.is-flipped #unitPhotoFrame {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+    .back-actions { position: relative; z-index: 20; }
   </style>
 
 </head>
@@ -1188,6 +1370,10 @@
                       <label>Liên hệ</label>
                       <div class="quick-value" id="flipPhoneValue">0909 000 001</div>
                     </div>
+                    <div class="quick-box full">
+                      <label>Người cư trú</label>
+                      <div class="quick-value" id="flipResidentsValue">Chưa cập nhật</div>
+                    </div>
                     <div class="quick-box">
                       <label>Công nợ</label>
                       <div class="quick-value" id="flipDebtValue">Đang theo dõi công nợ của căn này.</div>
@@ -1243,6 +1429,18 @@
                 <input class="input" id="publicNoteInput" placeholder="Nhập ghi chú public">
               </div>
             </div>
+
+            <div class="resident-editor" id="residentEditor">
+              <div class="resident-editor-head">
+                <div>
+                  <h4>Người cư trú trong căn</h4>
+                  <p class="section-sub" style="margin:4px 0 0">Nhà nào nhiều người thì bấm thêm người để nhập từng dòng.</p>
+                </div>
+                <button class="btn ghost" id="addResidentBtn" type="button">+ Thêm người</button>
+              </div>
+              <div class="resident-list-editor" id="residentListEditor"></div>
+            </div>
+
             <div class="auth-row" style="margin-top:12px">
               <button class="btn" id="saveBtn" type="button">Lưu thay đổi</button>
               <button class="btn ghost" id="resetBtn" type="button">Khôi phục dữ liệu mẫu</button>
@@ -1411,6 +1609,7 @@
     let isAdmin = false;
     let isEditing = false;
     let workingData = {};
+    let residentData = {};
     let currentSession = null;
 
     const unitList = document.getElementById('unitList');
@@ -1448,14 +1647,48 @@
     const flipOwnerValue = document.getElementById('flipOwnerValue');
     const flipTenantValue = document.getElementById('flipTenantValue');
     const flipPhoneValue = document.getElementById('flipPhoneValue');
+    const flipResidentsValue = document.getElementById('flipResidentsValue');
     const flipDebtValue = document.getElementById('flipDebtValue');
     const flipPublicNoteValue = document.getElementById('flipPublicNoteValue');
     const editInfoBtn = document.getElementById('editInfoBtn');
     const editCardNote = document.getElementById('editCardNote');
     const unitPhotoFrame = document.getElementById('unitPhotoFrame');
     const unitPhotoImg = document.getElementById('unitPhotoImg');
+    const residentListEditor = document.getElementById('residentListEditor');
+    const addResidentBtn = document.getElementById('addResidentBtn');
+
+    function shouldUseMobileFlipMode() {
+      const ua = navigator.userAgent || '';
+      return window.matchMedia('(max-width: 900px)').matches
+        || window.matchMedia('(pointer: coarse)').matches
+        || navigator.maxTouchPoints > 0
+        || /iPhone|iPad|iPod|Android|Mobile|Zalo/i.test(ua);
+    }
+
+    function applyMobileFlipMode() {
+      document.body.classList.toggle('mobile-flip-mode', shouldUseMobileFlipMode());
+    }
+
+    function setFlipCardFlipped(nextState) {
+      if (!detailFlipCard) return;
+      detailFlipCard.classList.toggle('is-flipped', Boolean(nextState));
+    }
+
+    function isInteractiveFlipTarget(target) {
+      return Boolean(target && target.closest('button, input, textarea, select, a, .resident-editor, .admin-card, .auth-modal'));
+    }
 
     const allUnitCodes = Object.values(zoneData).flat();
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
 
     function getZoneByUnit(unitCode) {
       return Object.keys(zoneData).find(zone => zoneData[zone].includes(unitCode)) || 'A';
@@ -1594,6 +1827,159 @@
       });
     }
 
+    async function loadResidentsFromSupabase() {
+      if (!isAdmin) return;
+      const { data, error } = await supabaseClient
+        .from('unit_residents')
+        .select('id, unit_code, full_name, relation, phone, id_number, note, sort_order')
+        .order('unit_code', { ascending: true })
+        .order('sort_order', { ascending: true })
+        .order('id', { ascending: true });
+
+      if (error) {
+        console.warn('Không tải được unit_residents:', error.message);
+        if (saveStatus) saveStatus.textContent = 'Chưa tải được danh sách người cư trú. Anh kiểm tra bảng unit_residents/policy nhé.';
+        return;
+      }
+
+      residentData = {};
+      (data || []).forEach(row => {
+        if (!residentData[row.unit_code]) residentData[row.unit_code] = [];
+        residentData[row.unit_code].push({
+          id: row.id,
+          fullName: row.full_name || '',
+          relation: row.relation || '',
+          phone: row.phone || '',
+          idNumber: row.id_number || '',
+          note: row.note || '',
+          sortOrder: row.sort_order || 0
+        });
+      });
+    }
+
+    function getResidents(unitCode) {
+      return residentData[unitCode] || [];
+    }
+
+    function getResidentsSummary(unitCode) {
+      const residents = getResidents(unitCode).filter(item => (item.fullName || '').trim());
+      if (!residents.length) return 'Chưa cập nhật';
+      return residents.map(item => {
+        const relation = (item.relation || '').trim();
+        return relation ? `${item.fullName} (${relation})` : item.fullName;
+      }).join(' · ');
+    }
+
+    function makeResidentRow(resident = {}, index = 0) {
+      const row = document.createElement('div');
+      row.className = 'resident-row';
+      row.dataset.residentId = resident.id || '';
+      row.innerHTML = `
+        <div class="resident-row-top">
+          <div class="resident-row-title">Người ${index + 1}</div>
+          <button class="resident-remove-btn" type="button">Xóa</button>
+        </div>
+        <div class="resident-grid">
+          <div class="field">
+            <label>Họ tên</label>
+            <input class="input resident-full-name" placeholder="Nhập họ tên" value="${escapeHtml(resident.fullName || '')}">
+          </div>
+          <div class="field">
+            <label>Quan hệ/Vai trò</label>
+            <input class="input resident-relation" placeholder="Chủ nhà / Vợ chồng / Con / Người thuê" value="${escapeHtml(resident.relation || '')}">
+          </div>
+          <div class="field">
+            <label>Số điện thoại</label>
+            <input class="input resident-phone" placeholder="Nhập số điện thoại" value="${escapeHtml(resident.phone || '')}">
+          </div>
+          <div class="field">
+            <label>CCCD</label>
+            <input class="input resident-id-number" placeholder="Nhập CCCD nếu cần" value="${escapeHtml(resident.idNumber || '')}">
+          </div>
+          <div class="field full">
+            <label>Ghi chú</label>
+            <input class="input resident-note" placeholder="Ghi chú thêm" value="${escapeHtml(resident.note || '')}">
+          </div>
+        </div>
+      `;
+      row.querySelector('.resident-remove-btn').addEventListener('click', () => {
+        row.remove();
+        renumberResidentRows();
+        if (residentListEditor && !residentListEditor.children.length) renderResidentEditor();
+      });
+      return row;
+    }
+
+    function renumberResidentRows() {
+      if (!residentListEditor) return;
+      Array.from(residentListEditor.querySelectorAll('.resident-row-title')).forEach((title, index) => {
+        title.textContent = `Người ${index + 1}`;
+      });
+    }
+
+    function renderResidentEditor() {
+      if (!residentListEditor) return;
+      residentListEditor.innerHTML = '';
+      const residents = getResidents(currentUnit);
+      if (!residents.length) {
+        const empty = document.createElement('div');
+        empty.className = 'resident-empty';
+        empty.textContent = 'Chưa có người cư trú nào. Bấm “+ Thêm người” để nhập thông tin.';
+        residentListEditor.appendChild(empty);
+        return;
+      }
+      residents.forEach((resident, index) => {
+        residentListEditor.appendChild(makeResidentRow(resident, index));
+      });
+    }
+
+    function addResidentRow() {
+      if (!residentListEditor) return;
+      const empty = residentListEditor.querySelector('.resident-empty');
+      if (empty) empty.remove();
+      residentListEditor.appendChild(makeResidentRow({}, residentListEditor.querySelectorAll('.resident-row').length));
+    }
+
+    function collectResidentsFromEditor() {
+      if (!residentListEditor) return [];
+      return Array.from(residentListEditor.querySelectorAll('.resident-row')).map((row, index) => ({
+        id: row.dataset.residentId || null,
+        fullName: row.querySelector('.resident-full-name')?.value.trim() || '',
+        relation: row.querySelector('.resident-relation')?.value.trim() || '',
+        phone: row.querySelector('.resident-phone')?.value.trim() || '',
+        idNumber: row.querySelector('.resident-id-number')?.value.trim() || '',
+        note: row.querySelector('.resident-note')?.value.trim() || '',
+        sortOrder: index
+      })).filter(item => item.fullName || item.relation || item.phone || item.idNumber || item.note);
+    }
+
+    async function saveResidentsToSupabase(unitCode) {
+      const residents = collectResidentsFromEditor();
+      const { error: deleteError } = await supabaseClient
+        .from('unit_residents')
+        .delete()
+        .eq('unit_code', unitCode);
+
+      if (deleteError) return deleteError;
+
+      if (residents.length) {
+        const payload = residents.map((item, index) => ({
+          unit_code: unitCode,
+          full_name: item.fullName || '',
+          relation: item.relation || '',
+          phone: item.phone || '',
+          id_number: item.idNumber || '',
+          note: item.note || '',
+          sort_order: index
+        }));
+        const { error: insertError } = await supabaseClient.from('unit_residents').insert(payload);
+        if (insertError) return insertError;
+      }
+
+      residentData[unitCode] = residents;
+      return null;
+    }
+
     function getRows(zone) {
       return [{ label:`Khu ${zone} · Tất cả căn`, units: zoneData[zone] || [] }];
     }
@@ -1623,7 +2009,7 @@
           btn.addEventListener('click', () => {
             currentUnit = unitCode;
             isEditing = false;
-            detailFlipCard.classList.remove('is-flipped');
+            setFlipCardFlipped(false);
             renderZone(currentZone);
             renderSidebar();
           });
@@ -1661,6 +2047,7 @@
       flipOwnerValue.textContent = data.ownerName || 'Chưa cập nhật';
       flipTenantValue.textContent = data.tenantName || 'Chưa cập nhật';
       flipPhoneValue.textContent = data.phone || 'Chưa cập nhật';
+      if (flipResidentsValue) flipResidentsValue.textContent = getResidentsSummary(currentUnit);
       flipDebtValue.textContent = data.paymentStatus || 'Đang theo dõi công nợ của căn này.';
       flipPublicNoteValue.textContent = data.publicNote || 'Không';
       flipHint.textContent = isAdmin
@@ -1675,7 +2062,7 @@
         : 'Mở form chỉnh sửa của căn này ở bên dưới.';
 
       if (!isAdmin) {
-        detailFlipCard.classList.remove('is-flipped');
+        setFlipCardFlipped(false);
         isEditing = false;
       }
 
@@ -1688,6 +2075,7 @@
       if (emailInput) emailInput.value = data.email || '';
       statusInput.value = data.publicStatus || 'Đang ở';
       publicNoteInput.value = data.publicNote || 'Không';
+      renderResidentEditor();
     }
 
     async function signInAdmin(email, password) {
@@ -1720,6 +2108,7 @@
       if (adminLoginSubmit) adminLoginSubmit.disabled = false;
       modalAdminPassword.value = '';
       await loadPrivateFromSupabase();
+      await loadResidentsFromSupabase();
       renderSidebar();
       showToast('Đã đăng nhập quản trị.');
     }
@@ -1729,7 +2118,7 @@
       currentSession = null;
       isAdmin = false;
       isEditing = false;
-      detailFlipCard.classList.remove('is-flipped');
+      setFlipCardFlipped(false);
       if (logoutBtn) logoutBtn.classList.add('hidden');
       if (loginBtn) loginBtn.classList.remove('hidden');
       renderSidebar();
@@ -1757,6 +2146,15 @@
       event.preventDefault();
       clearLoginError();
       signInAdmin(modalAdminEmail.value, modalAdminPassword.value);
+    });
+
+    if (addResidentBtn) addResidentBtn.addEventListener('click', addResidentRow);
+
+    ['pointerdown', 'touchstart', 'mousedown'].forEach(eventName => {
+      editInfoBtn.addEventListener(eventName, (event) => {
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+      }, true);
     });
 
     const heroSlides = Array.from(document.querySelectorAll('.hero-slide'));
@@ -1831,6 +2229,12 @@
         return;
       }
 
+      const residentsError = await saveResidentsToSupabase(currentUnit);
+      if (residentsError) {
+        saveStatus.textContent = 'Lưu danh sách người cư trú chưa thành công: ' + residentsError.message;
+        return;
+      }
+
       workingData[currentUnit] = nextData;
       saveStatus.textContent = 'Đã lưu thay đổi lên Supabase.';
       renderSidebar();
@@ -1840,7 +2244,10 @@
       saveStatus.textContent = 'Đang tải lại dữ liệu từ Supabase...';
       initLocalData();
       await loadUnitsFromSupabase();
-      if (isAdmin) await loadPrivateFromSupabase();
+      if (isAdmin) {
+        await loadPrivateFromSupabase();
+        await loadResidentsFromSupabase();
+      }
       saveStatus.textContent = 'Đã tải lại dữ liệu từ Supabase.';
       renderSidebar();
     });
@@ -1854,26 +2261,39 @@
       });
     });
 
-    editInfoBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
+    function openEditPanel(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+      }
       if (!isAdmin) return;
       isEditing = true;
-      detailFlipCard.classList.add('is-flipped');
+      setFlipCardFlipped(true);
       renderSidebar();
-      adminCard.scrollIntoView({ behavior:'smooth', block:'start' });
-      ownerInput.focus({ preventScroll:true });
-    });
+      window.setTimeout(() => {
+        setFlipCardFlipped(true);
+        adminCard.scrollIntoView({ behavior:'smooth', block:'start' });
+        ownerInput.focus({ preventScroll:true });
+      }, 0);
+    }
 
-    detailFlipCard.addEventListener('click', () => {
+    editInfoBtn.addEventListener('click', openEditPanel, true);
+
+    detailFlipCard.addEventListener('click', (event) => {
       if (!isAdmin) return;
-      detailFlipCard.classList.toggle('is-flipped');
+      if (isInteractiveFlipTarget(event.target)) return;
+      // Khi đang ở mặt thông tin, không tự lật về mặt hình nếu bấm trong vùng thông tin.
+      // Việc này tránh lỗi bấm Edit nhưng card quay ngược lại trên desktop/mobile.
+      if (detailFlipCard.classList.contains('is-flipped') && event.target.closest('.flip-back')) return;
+      setFlipCardFlipped(!detailFlipCard.classList.contains('is-flipped'));
     });
 
     function selectZone(zone) {
       currentZone = zone;
       currentUnit = zoneData[currentZone][0];
       isEditing = false;
-      detailFlipCard.classList.remove('is-flipped');
+      setFlipCardFlipped(false);
       renderZone(currentZone);
       renderSidebar();
     }
@@ -1889,6 +2309,8 @@
     });
 
     async function bootstrap() {
+      applyMobileFlipMode();
+      window.addEventListener('resize', applyMobileFlipMode);
       initLocalData();
       renderZone(currentZone);
       renderSidebar();
@@ -1896,7 +2318,10 @@
       const { data } = await supabaseClient.auth.getSession();
       currentSession = data.session;
       isAdmin = !!currentSession;
-      if (isAdmin) await loadPrivateFromSupabase();
+      if (isAdmin) {
+        await loadPrivateFromSupabase();
+        await loadResidentsFromSupabase();
+      }
       renderZone(currentZone);
       renderSidebar();
       if (saveStatus) saveStatus.textContent = 'Đã kết nối Supabase.';
