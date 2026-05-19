@@ -1450,7 +1450,7 @@
                       <div class="quick-value" id="flipOwnerValue">Nguyễn Văn A</div>
                     </div>
                     <div class="quick-box">
-                      <label>Khách thuê</label>
+                      <label>Vai trò</label>
                       <div class="quick-value" id="flipTenantValue">Chưa cập nhật</div>
                     </div>
                     <div class="quick-box">
@@ -1462,8 +1462,8 @@
                       <div class="quick-value" id="flipResidentsValue">Chưa cập nhật</div>
                     </div>
                     <div class="quick-box">
-                      <label>Công nợ</label>
-                      <div class="quick-value" id="flipDebtValue">Đang theo dõi công nợ của căn này.</div>
+                      <label>Diện tích</label>
+                      <div class="quick-value" id="flipDebtValue">Chưa cập nhật</div>
                     </div>
                     <div class="quick-box full">
                       <label>Ghi chú</label>
@@ -1490,8 +1490,12 @@
                 <input class="input" id="ownerInput" placeholder="Nhập tên chủ nhà">
               </div>
               <div class="field">
-                <label>Khách thuê</label>
-                <input class="input" id="tenantInput" placeholder="Nhập tên khách thuê">
+                <label>Vai trò</label>
+                <select class="select" id="tenantInput">
+                  <option>Chưa cập nhật</option>
+                  <option>Chủ nhà</option>
+                  <option>Khách thuê</option>
+                </select>
               </div>
               <div class="field">
                 <label>Số điện thoại</label>
@@ -1500,6 +1504,10 @@
               <div class="field">
                 <label>Email</label>
                 <input class="input" id="emailInput" placeholder="Nhập email">
+              </div>
+              <div class="field">
+                <label>Diện tích</label>
+                <input class="input" id="areaInput" placeholder="VD: 5x20m hoặc 100m²">
               </div>
               <div class="field">
                 <label>Tình trạng</label>
@@ -1687,6 +1695,7 @@
     let logData = {};
     let currentLogType = 'debts';
     let currentSession = null;
+    let privateEmailColumnAvailable = true;
 
     const unitList = document.getElementById('unitList');
     const zoneButtons = document.querySelectorAll('.zone');
@@ -1709,6 +1718,7 @@
     const tenantInput = document.getElementById('tenantInput');
     const phoneInput = document.getElementById('phoneInput');
     const emailInput = document.getElementById('emailInput');
+    const areaInput = document.getElementById('areaInput');
     const statusInput = document.getElementById('statusInput');
     const publicNoteInput = document.getElementById('publicNoteInput');
     const saveStatus = document.getElementById('saveStatus');
@@ -1892,9 +1902,25 @@
 
     async function loadPrivateFromSupabase() {
       if (!isAdmin) return;
-      const { data, error } = await supabaseClient
+
+      const baseColumns = 'unit_code, owner_name, tenant_name, phone, resident_info, payment_status, admin_note';
+      const columns = privateEmailColumnAvailable
+        ? baseColumns + ', email'
+        : baseColumns;
+
+      let { data, error } = await supabaseClient
         .from('unit_private')
-        .select('unit_code, owner_name, tenant_name, phone, resident_info, payment_status, admin_note');
+        .select(columns);
+
+      // Nếu Supabase chưa có cột email, tự fallback để web vẫn chạy bình thường.
+      if (error && privateEmailColumnAvailable && /email|column/i.test(error.message || '')) {
+        privateEmailColumnAvailable = false;
+        const retry = await supabaseClient
+          .from('unit_private')
+          .select(baseColumns);
+        data = retry.data;
+        error = retry.error;
+      }
 
       if (error) {
         console.warn('Không tải được unit_private:', error.message);
@@ -1910,6 +1936,7 @@
           ownerName: row.owner_name || '',
           tenantName: row.tenant_name || '',
           phone: row.phone || '',
+          email: privateEmailColumnAvailable ? (row.email || '') : (workingData[code].email || ''),
           residentInfo: row.resident_info || '',
           paymentStatus: row.payment_status || '',
           internalNote: row.admin_note || ''
@@ -2305,10 +2332,10 @@
       backTitle.textContent = `Thông tin quản trị · ${currentUnit}`;
       flipStatusValue.textContent = data.publicStatus || 'Chưa cập nhật';
       flipOwnerValue.textContent = data.ownerName || 'Chưa cập nhật';
-      flipTenantValue.textContent = data.tenantName || 'Chưa cập nhật';
+      flipTenantValue.textContent = ['Chủ nhà','Khách thuê','Chưa cập nhật'].includes(data.tenantName) ? data.tenantName : 'Chưa cập nhật';
       flipPhoneValue.textContent = data.phone || 'Chưa cập nhật';
       if (flipResidentsValue) flipResidentsValue.textContent = getResidentsSummary(currentUnit);
-      flipDebtValue.textContent = data.paymentStatus || 'Đang theo dõi công nợ của căn này.';
+      flipDebtValue.textContent = data.paymentStatus || 'Chưa cập nhật';
       flipPublicNoteValue.textContent = data.publicNote || 'Không';
       flipHint.textContent = isAdmin
         ? '🔄 Đã đăng nhập quản trị · bấm vào thẻ để lật qua mặt thông tin'
@@ -2330,9 +2357,10 @@
       adminTabsCard.classList.toggle('hidden', !isAdmin);
 
       ownerInput.value = data.ownerName || '';
-      tenantInput.value = data.tenantName || '';
+      tenantInput.value = ['Chủ nhà','Khách thuê','Chưa cập nhật'].includes(data.tenantName) ? data.tenantName : 'Chưa cập nhật';
       phoneInput.value = data.phone || '';
       if (emailInput) emailInput.value = data.email || '';
+      if (areaInput) areaInput.value = data.paymentStatus || '';
       statusInput.value = data.publicStatus || 'Đang ở';
       publicNoteInput.value = data.publicNote || 'Không';
       renderResidentEditor();
@@ -2458,7 +2486,8 @@
         ownerName: ownerInput.value.trim(),
         tenantName: tenantInput.value.trim(),
         phone: phoneInput.value.trim(),
-        email: emailInput ? emailInput.value.trim() : '',
+        email: emailInput ? emailInput.value.trim() : (current.email || ''),
+        paymentStatus: areaInput ? areaInput.value.trim() : (current.paymentStatus || ''),
         image: current.image || getUnitImagePath(currentUnit)
       };
 
@@ -2478,17 +2507,30 @@
         return;
       }
 
-      const { error: privateError } = await supabaseClient
+      const privatePayload = {
+        unit_code: currentUnit,
+        owner_name: nextData.ownerName,
+        tenant_name: nextData.tenantName,
+        phone: nextData.phone,
+        resident_info: nextData.residentInfo || '',
+        payment_status: nextData.paymentStatus || '',
+        admin_note: nextData.internalNote || ''
+      };
+      if (privateEmailColumnAvailable) privatePayload.email = nextData.email || '';
+
+      let { error: privateError } = await supabaseClient
         .from('unit_private')
-        .upsert({
-          unit_code: currentUnit,
-          owner_name: nextData.ownerName,
-          tenant_name: nextData.tenantName,
-          phone: nextData.phone,
-          resident_info: nextData.email || nextData.residentInfo || '',
-          payment_status: nextData.paymentStatus || '',
-          admin_note: nextData.internalNote || ''
-        }, { onConflict: 'unit_code' });
+        .upsert(privatePayload, { onConflict: 'unit_code' });
+
+      // Nếu database chưa có cột email, lưu lại các trường còn lại để không làm gián đoạn thao tác.
+      if (privateError && privateEmailColumnAvailable && /email|column/i.test(privateError.message || '')) {
+        privateEmailColumnAvailable = false;
+        delete privatePayload.email;
+        const retryPrivate = await supabaseClient
+          .from('unit_private')
+          .upsert(privatePayload, { onConflict: 'unit_code' });
+        privateError = retryPrivate.error;
+      }
 
       if (privateError) {
         saveStatus.textContent = 'Lưu thông tin chi tiết chưa thành công: ' + privateError.message;
