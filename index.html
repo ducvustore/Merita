@@ -1554,6 +1554,7 @@
 
             <div class="log-toolbar">
               <button class="btn ghost small-log-btn" id="addLogBtn" type="button">+ Thêm dòng</button>
+              <button class="btn ghost small-log-btn" id="addMonthlyPqlBtn" type="button">+ PQL hàng tháng</button>
               <button class="btn small-log-btn" id="saveLogsBtn" type="button">Lưu mục này</button>
               <span class="logs-save-note" id="logsSaveStatus"></span>
             </div>
@@ -1603,6 +1604,24 @@
       </form>
     </div>
   </div>
+
+  <div class="auth-modal" id="pqlPeriodModal" aria-hidden="true">
+    <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="pqlPeriodTitle">
+      <form id="pqlPeriodForm">
+        <h3 id="pqlPeriodTitle">Thêm PQL hàng tháng</h3>
+        <p>Nhập kỳ/ngày cần ghi nhận phí quản lý cho căn đang chọn.</p>
+        <div class="field">
+          <label>Kỳ / Ngày</label>
+          <input class="input" id="pqlPeriodInput" placeholder="VD: 05/2026 hoặc 2026-05-01" required>
+        </div>
+        <div class="auth-dialog-actions">
+          <button class="btn secondary" id="pqlPeriodCancel" type="button">Hủy</button>
+          <button class="btn" id="pqlPeriodSubmit" type="submit">Thêm dòng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="app-toast" id="appToast" aria-live="polite"></div>
 
 
@@ -1621,6 +1640,11 @@
     const adminLoginSubmit = document.getElementById('adminLoginSubmit');
     const adminLoginError = document.getElementById('adminLoginError');
     const appToast = document.getElementById('appToast');
+    const pqlPeriodModal = document.getElementById('pqlPeriodModal');
+    const pqlPeriodForm = document.getElementById('pqlPeriodForm');
+    const pqlPeriodInput = document.getElementById('pqlPeriodInput');
+    const pqlPeriodCancel = document.getElementById('pqlPeriodCancel');
+    const addMonthlyPqlBtn = document.getElementById('addMonthlyPqlBtn');
     let toastTimer = null;
 
     function setPasswordVisibility(isVisible) {
@@ -1863,6 +1887,7 @@
         email: seeded.email || '',
         internalNote: seeded.internalNote || '',
         paymentStatus: seeded.paymentStatus || '',
+        monthlyManagementFee: seeded.monthlyManagementFee || null,
         residentInfo: seeded.residentInfo || '',
         image: seeded.image || getUnitImagePath(unitCode)
       };
@@ -1903,7 +1928,7 @@
     async function loadPrivateFromSupabase() {
       if (!isAdmin) return;
 
-      const baseColumns = 'unit_code, owner_name, tenant_name, phone, resident_info, payment_status, admin_note';
+      const baseColumns = 'unit_code, owner_name, tenant_name, phone, resident_info, payment_status, admin_note, monthly_management_fee';
       const columns = privateEmailColumnAvailable
         ? baseColumns + ', email'
         : baseColumns;
@@ -1939,6 +1964,7 @@
           email: privateEmailColumnAvailable ? (row.email || '') : (workingData[code].email || ''),
           residentInfo: row.resident_info || '',
           paymentStatus: row.payment_status || '',
+          monthlyManagementFee: row.monthly_management_fee === null || row.monthly_management_fee === undefined ? null : Number(row.monthly_management_fee),
           internalNote: row.admin_note || ''
         };
       });
@@ -2194,6 +2220,69 @@
       ['debts', 'incidents', 'notes'].forEach(type => renderLogEditor(type));
     }
 
+
+    function formatVndNumber(value) {
+      const num = Number(value);
+      if (!Number.isFinite(num) || num <= 0) return '';
+      return new Intl.NumberFormat('vi-VN').format(num);
+    }
+
+    function normalizePqlPeriod(period) {
+      const raw = String(period || '').trim();
+      const monthYear = raw.match(/^(\d{1,2})\/(\d{4})$/);
+      if (monthYear) {
+        const month = monthYear[1].padStart(2, '0');
+        return `${monthYear[2]}-${month}-01`;
+      }
+      const isoMonth = raw.match(/^(\d{4})-(\d{1,2})$/);
+      if (isoMonth) return `${isoMonth[1]}-${isoMonth[2].padStart(2, '0')}-01`;
+      return raw;
+    }
+
+    function openPqlPeriodModal() {
+      if (!isAdmin || !currentUnit) return;
+      const current = getWorkingUnitData(currentUnit);
+      const fee = Number(current.monthlyManagementFee || 0);
+      if (!Number.isFinite(fee) || fee <= 0) {
+        showToast('Chưa có dữ liệu căn này.');
+        if (logsSaveStatus) logsSaveStatus.textContent = 'Chưa có dữ liệu PQL hàng tháng cho căn này.';
+        return;
+      }
+      if (pqlPeriodInput) pqlPeriodInput.value = '';
+      pqlPeriodModal.classList.add('is-open');
+      pqlPeriodModal.setAttribute('aria-hidden', 'false');
+      setTimeout(() => pqlPeriodInput && pqlPeriodInput.focus(), 30);
+    }
+
+    function closePqlPeriodModal() {
+      pqlPeriodModal.classList.remove('is-open');
+      pqlPeriodModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function addMonthlyPqlRow(periodText) {
+      const current = getWorkingUnitData(currentUnit);
+      const fee = Number(current.monthlyManagementFee || 0);
+      if (!Number.isFinite(fee) || fee <= 0) {
+        showToast('Chưa có dữ liệu căn này.');
+        if (logsSaveStatus) logsSaveStatus.textContent = 'Chưa có dữ liệu PQL hàng tháng cho căn này.';
+        return;
+      }
+      currentLogType = 'debts';
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'debts'));
+      Object.entries(logTabPanels).forEach(([type, panel]) => panel && panel.classList.toggle('hidden', type !== 'debts'));
+      if (addMonthlyPqlBtn) addMonthlyPqlBtn.classList.remove('hidden');
+      const panel = logTabPanels.debts;
+      if (!panel) return;
+      const empty = panel.querySelector('.log-empty');
+      if (empty) empty.remove();
+      panel.appendChild(makeLogRow({
+        logDate: normalizePqlPeriod(periodText),
+        title: 'PQL hàng tháng',
+        content: `Số tiền: ${formatVndNumber(fee)} VNĐ`
+      }, panel.querySelectorAll('.log-editor-item').length, 'debts'));
+      showToast('Đã thêm dòng PQL hàng tháng. Bấm “Lưu mục này” để lưu.');
+    }
+
     function addLogRow() {
       const panel = logTabPanels[currentLogType];
       if (!panel) return;
@@ -2431,6 +2520,7 @@
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && adminLoginModal.classList.contains('is-open')) closeAdminLoginModal();
+      if (event.key === 'Escape' && pqlPeriodModal && pqlPeriodModal.classList.contains('is-open')) closePqlPeriodModal();
     });
     adminLoginForm.addEventListener('submit', (event) => {
       event.preventDefault();
@@ -2441,6 +2531,16 @@
     if (addResidentBtn) addResidentBtn.addEventListener('click', addResidentRow);
     if (addLogBtn) addLogBtn.addEventListener('click', addLogRow);
     if (saveLogsBtn) saveLogsBtn.addEventListener('click', saveCurrentLogsOnly);
+    if (addMonthlyPqlBtn) addMonthlyPqlBtn.addEventListener('click', openPqlPeriodModal);
+    if (pqlPeriodCancel) pqlPeriodCancel.addEventListener('click', closePqlPeriodModal);
+    if (pqlPeriodModal) pqlPeriodModal.addEventListener('click', (event) => { if (event.target === pqlPeriodModal) closePqlPeriodModal(); });
+    if (pqlPeriodForm) pqlPeriodForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const period = pqlPeriodInput ? pqlPeriodInput.value.trim() : '';
+      if (!period) return;
+      closePqlPeriodModal();
+      addMonthlyPqlRow(period);
+    });
 
     ['pointerdown', 'touchstart', 'mousedown'].forEach(eventName => {
       [editInfoBtn, backToPhotoBtn].filter(Boolean).forEach(btn => {
@@ -2488,6 +2588,7 @@
         phone: phoneInput.value.trim(),
         email: emailInput ? emailInput.value.trim() : (current.email || ''),
         paymentStatus: areaInput ? areaInput.value.trim() : (current.paymentStatus || ''),
+        monthlyManagementFee: current.monthlyManagementFee || null,
         image: current.image || getUnitImagePath(currentUnit)
       };
 
@@ -2514,6 +2615,7 @@
         phone: nextData.phone,
         resident_info: nextData.residentInfo || '',
         payment_status: nextData.paymentStatus || '',
+        monthly_management_fee: current.monthlyManagementFee || null,
         admin_note: nextData.internalNote || ''
       };
       if (privateEmailColumnAvailable) privatePayload.email = nextData.email || '';
@@ -2571,6 +2673,7 @@
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         currentLogType = tab.dataset.tab || 'debts';
+        if (addMonthlyPqlBtn) addMonthlyPqlBtn.classList.toggle('hidden', currentLogType !== 'debts');
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         ['debtsTab','incidentsTab','notesTab'].forEach(id => document.getElementById(id).classList.add('hidden'));
